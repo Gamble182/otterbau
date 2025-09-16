@@ -11,6 +11,11 @@ import Filters, { type FilterState } from "@/components/Filters";
 import { exportCSV } from "@/lib/export/csv";
 import { exportJSON } from "@/lib/export/json";
 import { useEntries } from "@/store/useEntries";
+import WorkHoursBar from "@/components/charts/WorkHoursBar";
+import ExpensesLine from "@/components/charts/ExpensesLine";
+import WorkByPersonBar from "@/components/charts/WorkByPersonBar";
+import ExpensesByCategoryPie from "@/components/charts/ExpensesByCategoryPie";
+
 
 export default function Home() {
   const addEntry = useEntries((s) => s.add);
@@ -82,6 +87,11 @@ export default function Home() {
         </p>
 
         <DashboardCards />
+
+        <WorkHoursBar />
+        <ExpensesLine />
+        <WorkByPersonBar topN={10} />
+        <ExpensesByCategoryPie topN={15} />
 
         <QuickAdd />
 
