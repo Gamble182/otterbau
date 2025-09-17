@@ -1,16 +1,24 @@
-'use client';
+"use client";
 import { useMemo } from "react";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LabelList } from "recharts";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  LabelList,
+} from "recharts";
 import { useEntries } from "@/store/useEntries";
 
 type Props = {
   from?: string; // yyyy-mm-dd (optional)
-  to?: string;   // yyyy-mm-dd (optional)
+  to?: string; // yyyy-mm-dd (optional)
   topN?: number; // optional: z.B. 10
 };
 
 export default function WorkByPersonBar({ from, to, topN }: Props) {
-  const items = useEntries(s => s.items);
+  const items = useEntries((s) => s.items);
 
   const data = useMemo(() => {
     // nur Work-Einträge + Zeitraum
@@ -19,7 +27,7 @@ export default function WorkByPersonBar({ from, to, topN }: Props) {
       if (e.type !== "work") continue;
       if (from && e.date < from) continue;
       if (to && e.date > to) continue;
-      const p = (e.payload as any);
+      const p = e.payload as any;
       const key = p.personName ?? "Unbekannt";
       const add = Number(p.hours ?? 0);
       byPerson.set(key, (byPerson.get(key) ?? 0) + add);
@@ -42,16 +50,33 @@ export default function WorkByPersonBar({ from, to, topN }: Props) {
 
   return (
     <div className="rounded-xl border border-white/10 p-4">
-      <div className="text-sm opacity-70 mb-2">Arbeitsstunden pro Person (Summe)</div>
+      <div className="text-sm opacity-70 mb-2">
+        Arbeitsstunden pro Person (Summe)
+      </div>
       <div style={{ width: "100%", height: 320 }}>
         <ResponsiveContainer>
-          <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 30 }}>
-            <XAxis dataKey="name" angle={-20} textAnchor="end" interval={0} height={50} />
-            <YAxis />
+          <BarChart
+            data={data}
+            margin={{ top: 10, right: 10, left: 0, bottom: 30 }}
+          >
+            <XAxis
+              dataKey="name"
+              angle={-20}
+              textAnchor="end"
+              interval={0}
+              height={50}
+              tickLine={false}
+              axisLine={{ stroke: "#e5e7eb" }}
+              tick={{ fill: "#6b7280", fontSize: 12 }}
+            />
+            <YAxis
+              width={40}
+              axisLine={{ stroke: "#e5e7eb" }}
+              tickLine={false}
+              tick={{ fill: "#6b7280", fontSize: 12 }}
+            />
             <Tooltip />
-            <Bar dataKey="value">
-              <LabelList dataKey="value" position="top" formatter={(v: number) => v.toFixed(1)} />
-            </Bar>
+            <Bar dataKey="value" fill="#16a34a" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
