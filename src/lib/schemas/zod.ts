@@ -17,6 +17,7 @@ export const WorkPayload = z.object({
   project: z.string().optional(),
   note: z.string().optional(),
 });
+export type WorkPayload = z.infer<typeof WorkPayload>;
 
 export const ExpensePayload = z.object({
   position: z.string(),
@@ -31,6 +32,7 @@ export const ExpensePayload = z.object({
   currency: z.string().length(3).default("EUR"),
   note: z.string().optional(),
 });
+export type ExpensePayload = z.infer<typeof ExpensePayload>;
 
 export const ProjectCostPayload = z.object({
   position: z.string(),
@@ -39,6 +41,7 @@ export const ProjectCostPayload = z.object({
   amount: z.number().nonnegative(),
   paidDate: z.string().optional(), // ISO
 });
+export type ProjectCostPayload = z.infer<typeof ProjectCostPayload>;
 
 // --- Entry ---
 export const EntrySchema = z.object({

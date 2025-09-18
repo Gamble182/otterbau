@@ -155,7 +155,7 @@ export default function QuickActions({
               </p>
               <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
                 Quick-Add verwendet Standardwerte für eine schnelle Erfassung.
-                Für detaillierte Eingaben nutze die "Detailerfassung".
+                Für detaillierte Eingaben nutze die &ldquo;Detailerfassung&rdquo;.
               </p>
             </div>
           </div>

@@ -2,7 +2,7 @@ import type { Entry } from "@/lib/schemas/zod";
 
 export function exportCSV(entries: Entry[]) {
   const rows = entries.map(e=>{
-    const p:any = e.payload;
+    const p = e.payload as Record<string, unknown>;
     if (e.type==="work")   return [e.date, e.type, p.personName, p.hours, p.project??"", p.note??""].join(";");
     if (e.type==="expense")return [e.date, e.type, p.position, p.category, p.qty, p.unitPrice, p.total, p.buyer].join(";");
     return [e.date, e.type, p.position, p.category, p.amount, p.note??""].join(";");

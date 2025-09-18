@@ -9,16 +9,37 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useEntries } from "@/store/useEntries";
+import { ExpensePayload } from "@/lib/schemas/zod";
+
+interface ExpenseChartData {
+  label: string;
+  key: string;
+  value: number;
+  cumulative: number;
+}
+
+interface TooltipPayload {
+  dataKey: string;
+  value: number;
+  color: string;
+  payload: ExpenseChartData;
+}
 
 // Custom Tooltip Component with Sony styling
-function CustomTooltip({ active, payload, label }: any) {
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayload[];
+  label?: string;
+}
+
+function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (active && payload && payload.length) {
     return (
       <div className="bg-[var(--bg-surface-elevated)] backdrop-blur-xl p-4 rounded-xl shadow-xl border border-[var(--border-emphasis)]">
         <p className="text-sm font-semibold text-[var(--text-primary)] mb-3">
           {label}. des Monats
         </p>
-        {payload.map((entry: any, index: number) => (
+        {payload?.map((entry: TooltipPayload, index: number) => (
           <div key={index} className="flex items-center gap-3 mb-1">
             <div
               className="w-3 h-3 rounded-full"
@@ -59,7 +80,7 @@ export default function ExpensesLine() {
     for (const e of items.filter((e) => e.type === "expense")) {
       const k = e.date.slice(0, 10);
       const row = arr.find((x) => x.key === k);
-      if (row) row.value += Number((e.payload as any).total ?? 0);
+      if (row) row.value += Number((e.payload as ExpensePayload).total ?? 0);
     }
 
     // Calculate cumulative values

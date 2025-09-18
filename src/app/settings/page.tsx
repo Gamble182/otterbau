@@ -56,9 +56,9 @@ export default function SettingsPage() {
       setStatus(
         `Import fertig: ${parsed.persons.length} Personen, ${parsed.entries.length} Einträge.`
       );
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      setStatus(`Import fehlgeschlagen: ${e?.message ?? String(e)}`);
+      setStatus(`Import fehlgeschlagen: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setBusy(false);
     }
@@ -86,9 +86,9 @@ export default function SettingsPage() {
 
       setStatus("Zurückgesetzt. Seite wird neu geladen…");
       setTimeout(() => location.reload(), 600);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      setStatus(`Fehler beim Zurücksetzen: ${e?.message ?? String(e)}`);
+      setStatus(`Fehler beim Zurücksetzen: ${e instanceof Error ? e.message : String(e)}`);
       setBusy(false);
     }
   };

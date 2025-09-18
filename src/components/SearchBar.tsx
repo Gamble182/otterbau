@@ -122,7 +122,7 @@ export default function SearchBar() {
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-[var(--text-primary)]">
-                    Suchergebnisse für "{value}"
+                    Suchergebnisse für &ldquo;{value}&rdquo;
                   </div>
                   <div className="text-xs text-[var(--text-secondary)]">
                     3 Ergebnisse gefunden

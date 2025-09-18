@@ -18,7 +18,7 @@ export const useSettings = create<SettingsState>()((set, get) => ({
   load: async () => {
     const all = await db.settings.toArray();
     const s = all[0] ?? { defaultCurrency: "EUR", weekStart: 1, exportFormat: "csv", backupPolicy: "manual" } as Settings;
-    if (!all[0]) await db.settings.add(s as any);
+    if (!all[0]) await db.settings.add(s);
     set({ value: s, loaded: true });
   },
 
@@ -27,9 +27,9 @@ export const useSettings = create<SettingsState>()((set, get) => ({
     const next = { ...curr, ...patch };
     const rows = await db.settings.toArray();
     if (rows[0]) {
-      await db.settings.update(rows[0] as any, next as any);
+      await db.settings.where(':id').equals(1).modify(next);
     } else {
-      await db.settings.add(next as any);
+      await db.settings.add(next);
     }
     set({ value: next });
   },

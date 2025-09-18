@@ -5,9 +5,9 @@ import { useEntries } from "@/store/useEntries";
 import { useSettings } from "@/store/useSettings";
 
 export function InitStores() {
-  const loadPersons = usePersons(s => s.load);
-  const loadEntries = useEntries(s => s.load);
-  const loadSettings = useSettings(s => s.load);
+  const loadPersons = usePersons((s) => s.load);
+  const loadEntries = useEntries((s) => s.load);
+  const loadSettings = useSettings((s) => s.load);
 
   useEffect(() => {
     loadPersons();

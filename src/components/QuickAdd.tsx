@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
+import React from "react";
 import Dialog from "./Dialog";
 import { useEntries } from "@/store/useEntries";
 import { usePersons } from "@/store/usePersons";
 import { isoDate, isoNow } from "@/lib/utils";
+import type { Entry, WorkPayload, ExpensePayload } from "@/lib/schemas/zod";
 
 export default function QuickAdd() {
   const [open, setOpen] = useState(false);
@@ -138,10 +140,10 @@ function WorkForm({ onDone }: { onDone: () => void }) {
           hours: hrs,
           note,
           project,
-        },
+        } as WorkPayload,
         createdAt: isoNow(),
         updatedAt: isoNow(),
-      } as any);
+      } as Omit<Entry, 'id'>);
       onDone();
     } finally {
       setIsSubmitting(false);
@@ -164,7 +166,7 @@ function WorkForm({ onDone }: { onDone: () => void }) {
           </label>
           <select
             value={personId}
-            onChange={(e) => setPersonId(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPersonId(e.target.value)}
             className="form-select"
           >
             {persons.map((p) => (
@@ -182,7 +184,7 @@ function WorkForm({ onDone }: { onDone: () => void }) {
           <input
             type="date"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDate(e.target.value)}
             className="form-input"
           />
         </div>
@@ -199,7 +201,7 @@ function WorkForm({ onDone }: { onDone: () => void }) {
             step="0.1"
             min="0"
             value={hours}
-            onChange={(e) => setHours(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHours(e.target.value)}
             className="form-input"
             placeholder="z.B. 2.5"
           />
@@ -216,7 +218,7 @@ function WorkForm({ onDone }: { onDone: () => void }) {
           </label>
           <input
             value={project}
-            onChange={(e) => setProject(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProject(e.target.value)}
             className="form-input"
             placeholder="z.B. Küche, Bad, Dach"
           />
@@ -236,7 +238,7 @@ function WorkForm({ onDone }: { onDone: () => void }) {
         <textarea
           rows={3}
           value={note}
-          onChange={(e) => setNote(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNote(e.target.value)}
           className="form-textarea"
           placeholder="Was wurde gemacht?"
         />
@@ -318,10 +320,10 @@ function ExpenseForm({ onDone }: { onDone: () => void }) {
           currency: "EUR",
           buyer,
           note,
-        },
+        } as ExpensePayload,
         createdAt: isoNow(),
         updatedAt: isoNow(),
-      } as any);
+      } as Omit<Entry, 'id'>);
       onDone();
     } finally {
       setIsSubmitting(false);
@@ -348,7 +350,7 @@ function ExpenseForm({ onDone }: { onDone: () => void }) {
           </label>
           <input
             value={position}
-            onChange={(e) => setPosition(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPosition(e.target.value)}
             className="form-input"
             placeholder="z.B. Bohrmaschine, Material, Farbe"
           />
@@ -361,7 +363,7 @@ function ExpenseForm({ onDone }: { onDone: () => void }) {
           <input
             type="date"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDate(e.target.value)}
             className="form-input"
           />
         </div>
@@ -375,7 +377,7 @@ function ExpenseForm({ onDone }: { onDone: () => void }) {
           </label>
           <select
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCategory(e.target.value)}
             className="form-select"
           >
             <option>🔧 Werkzeug</option>
@@ -393,7 +395,7 @@ function ExpenseForm({ onDone }: { onDone: () => void }) {
           </label>
           <input
             value={buyer}
-            onChange={(e) => setBuyer(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBuyer(e.target.value)}
             className="form-input"
             placeholder="Name des Käufers"
           />
@@ -411,7 +413,7 @@ function ExpenseForm({ onDone }: { onDone: () => void }) {
             step="0.1"
             min="0"
             value={qty}
-            onChange={(e) => setQty(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQty(e.target.value)}
             className="form-input"
           />
         </div>
@@ -425,7 +427,7 @@ function ExpenseForm({ onDone }: { onDone: () => void }) {
             step="0.01"
             min="0"
             value={price}
-            onChange={(e) => setPrice(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrice(e.target.value)}
             className="form-input"
           />
         </div>
@@ -453,7 +455,7 @@ function ExpenseForm({ onDone }: { onDone: () => void }) {
         <textarea
           rows={2}
           value={note}
-          onChange={(e) => setNote(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNote(e.target.value)}
           className="form-textarea"
           placeholder="Zusätzliche Informationen..."
         />

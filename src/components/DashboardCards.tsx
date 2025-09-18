@@ -23,12 +23,14 @@ export default function DashboardCards() {
     for (const e of items) {
       const d = new Date(e.date);
       if (e.type === "work") {
-        const h = Number((e.payload as any).hours ?? 0);
+        const payload = e.payload as { hours?: number };
+        const h = Number(payload.hours ?? 0);
         if (e.date.startsWith(isoToday)) todayHours += h;
         if (d >= startOfWeek) weekHours += h;
         if (d >= startOfMonth) monthHours += h;
       } else if (e.type === "expense") {
-        const v = Number((e.payload as any).total ?? 0);
+        const payload = e.payload as { total?: number };
+        const v = Number(payload.total ?? 0);
         if (d >= startOfWeek) weekExpenses += v;
         if (d >= startOfMonth) monthExpenses += v;
       }

@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { FilterState } from "./Filters";
 import { useFilteredEntries } from "./Filters";
 import { Card } from "@/components/ui/Card";
+import type { WorkPayload, ExpensePayload, ProjectCostPayload } from "@/lib/schemas/zod";
 
 export default function EntryList({ filter }: { filter: FilterState }) {
   const items = useFilteredEntries(filter).slice().reverse();
@@ -132,7 +133,6 @@ export default function EntryList({ filter }: { filter: FilterState }) {
     <Card>
       <div className="divide-y divide-slate-100 dark:divide-slate-700">
         {items.map((entry) => {
-          const payload = entry.payload as any;
           const isExpanded = expandedItems.has(entry.id);
 
           let primaryText = "";
@@ -141,16 +141,19 @@ export default function EntryList({ filter }: { filter: FilterState }) {
           let badgeText = "";
 
           if (entry.type === "work") {
+            const payload = entry.payload as WorkPayload;
             primaryText = payload.personName || "Unbekannt";
             secondaryText = payload.note || payload.project || "Arbeitszeit";
             valueText = `${payload.hours}h`;
             badgeText = "Arbeit";
           } else if (entry.type === "expense") {
+            const payload = entry.payload as ExpensePayload;
             primaryText = payload.position || "Ausgabe";
             secondaryText = `${payload.category} • ${payload.buyer}`;
             valueText = `${Number(payload.total).toFixed(2)}€`;
             badgeText = "Ausgabe";
           } else {
+            const payload = entry.payload as ProjectCostPayload;
             primaryText = payload.position || "Eintrag";
             secondaryText = payload.category || "Projektkosten";
             valueText = `${Number(payload.amount || 0).toFixed(2)}€`;
@@ -244,75 +247,81 @@ export default function EntryList({ filter }: { filter: FilterState }) {
                         </span>
                       </div>
 
-                      {entry.type === "work" && (
-                        <>
-                          {payload.project && (
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-slate-500 dark:text-slate-400">
-                                Projekt:
-                              </span>
-                              <span className="text-slate-700 dark:text-slate-300">
-                                {payload.project}
-                              </span>
-                            </div>
-                          )}
-                          {payload.note && (
-                            <div className="text-xs">
-                              <span className="text-slate-500 dark:text-slate-400 block mb-1">
-                                Notiz:
-                              </span>
-                              <p className="text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 rounded p-2">
-                                {payload.note}
-                              </p>
-                            </div>
-                          )}
-                        </>
-                      )}
+                      {entry.type === "work" && (() => {
+                        const payload = entry.payload as WorkPayload;
+                        return (
+                          <>
+                            {payload.project && (
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-slate-500 dark:text-slate-400">
+                                  Projekt:
+                                </span>
+                                <span className="text-slate-700 dark:text-slate-300">
+                                  {payload.project}
+                                </span>
+                              </div>
+                            )}
+                            {payload.note && (
+                              <div className="text-xs">
+                                <span className="text-slate-500 dark:text-slate-400 block mb-1">
+                                  Notiz:
+                                </span>
+                                <p className="text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 rounded p-2">
+                                  {payload.note}
+                                </p>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
 
-                      {entry.type === "expense" && (
-                        <>
-                          <div className="grid grid-cols-2 gap-4 text-xs">
-                            <div>
-                              <span className="text-slate-500 dark:text-slate-400 block mb-1">
-                                Menge:
-                              </span>
-                              <span className="text-slate-700 dark:text-slate-300 font-semibold">
-                                {payload.qty || 1}
-                              </span>
+                      {entry.type === "expense" && (() => {
+                        const payload = entry.payload as ExpensePayload;
+                        return (
+                          <>
+                            <div className="grid grid-cols-2 gap-4 text-xs">
+                              <div>
+                                <span className="text-slate-500 dark:text-slate-400 block mb-1">
+                                  Menge:
+                                </span>
+                                <span className="text-slate-700 dark:text-slate-300 font-semibold">
+                                  {payload.qty || 1}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-slate-500 dark:text-slate-400 block mb-1">
+                                  Einzelpreis:
+                                </span>
+                                <span className="text-slate-700 dark:text-slate-300 font-semibold">
+                                  {Number(payload.unitPrice || 0).toFixed(2)}€
+                                </span>
+                              </div>
                             </div>
-                            <div>
-                              <span className="text-slate-500 dark:text-slate-400 block mb-1">
-                                Einzelpreis:
-                              </span>
-                              <span className="text-slate-700 dark:text-slate-300 font-semibold">
-                                {Number(payload.unitPrice || 0).toFixed(2)}€
-                              </span>
-                            </div>
-                          </div>
 
-                          {payload.manufacturer && (
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-slate-500 dark:text-slate-400">
-                                Hersteller:
-                              </span>
-                              <span className="text-slate-700 dark:text-slate-300">
-                                {payload.manufacturer}
-                              </span>
-                            </div>
-                          )}
+                            {payload.manufacturer && (
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-slate-500 dark:text-slate-400">
+                                  Hersteller:
+                                </span>
+                                <span className="text-slate-700 dark:text-slate-300">
+                                  {payload.manufacturer}
+                                </span>
+                              </div>
+                            )}
 
-                          {payload.note && (
-                            <div className="text-xs">
-                              <span className="text-slate-500 dark:text-slate-400 block mb-1">
-                                Notiz:
-                              </span>
-                              <p className="text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 rounded p-2">
-                                {payload.note}
-                              </p>
-                            </div>
-                          )}
-                        </>
-                      )}
+                            {payload.note && (
+                              <div className="text-xs">
+                                <span className="text-slate-500 dark:text-slate-400 block mb-1">
+                                  Notiz:
+                                </span>
+                                <p className="text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 rounded p-2">
+                                  {payload.note}
+                                </p>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
 
                       {entry.tags && entry.tags.length > 0 && (
                         <div className="text-xs">
@@ -379,7 +388,7 @@ export default function EntryList({ filter }: { filter: FilterState }) {
                     {items
                       .filter((e) => e.type === "work")
                       .reduce(
-                        (sum, e) => sum + Number((e.payload as any).hours || 0),
+                        (sum, e) => sum + Number((e.payload as WorkPayload).hours || 0),
                         0
                       )
                       .toFixed(1)}
@@ -408,7 +417,7 @@ export default function EntryList({ filter }: { filter: FilterState }) {
                     {items
                       .filter((e) => e.type === "expense")
                       .reduce(
-                        (sum, e) => sum + Number((e.payload as any).total || 0),
+                        (sum, e) => sum + Number((e.payload as ExpensePayload).total || 0),
                         0
                       )
                       .toFixed(2)}

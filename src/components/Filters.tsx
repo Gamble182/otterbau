@@ -1,7 +1,9 @@
 "use client";
 import { useState, useMemo } from "react";
+import React from "react";
 import { useEntries } from "@/store/useEntries";
 import { Card } from "@/components/ui/Card";
+import type { WorkPayload, ExpensePayload, ProjectCostPayload } from "@/lib/schemas/zod";
 
 export type FilterState = {
   type: "" | "work" | "expense" | "projectCost";
@@ -31,14 +33,18 @@ export default function Filters({ onChange }: FiltersProps) {
     const categories = new Set<string>();
 
     entries.forEach((entry) => {
-      const payload = entry.payload as any;
-
-      if (entry.type === "work" && payload.personName) {
-        persons.add(payload.personName);
+      if (entry.type === "work") {
+        const payload = entry.payload as WorkPayload;
+        if (payload.personName) {
+          persons.add(payload.personName);
+        }
       }
 
-      if (payload.category) {
-        categories.add(payload.category);
+      if (entry.type === "expense" || entry.type === "projectCost") {
+        const payload = entry.payload as ExpensePayload | ProjectCostPayload;
+        if (payload.category) {
+          categories.add(payload.category);
+        }
       }
     });
 
@@ -177,7 +183,7 @@ export default function Filters({ onChange }: FiltersProps) {
                 <label className="form-label">Typ</label>
                 <select
                   value={type}
-                  onChange={(e) => setType(e.target.value as any)}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setType(e.target.value as FilterState["type"])}
                   className="form-select"
                 >
                   <option value="">Alle Typen</option>
@@ -361,13 +367,13 @@ export function useFilteredEntries(f: FilterState) {
 
         // Person Filter (only for work entries)
         if (f.person && e.type === "work") {
-          const payload = e.payload as any;
+          const payload = e.payload as WorkPayload;
           if (payload.personName !== f.person) return false;
         }
 
         // Category Filter
-        if (f.category) {
-          const payload = e.payload as any;
+        if (f.category && (e.type === "expense" || e.type === "projectCost")) {
+          const payload = e.payload as ExpensePayload | ProjectCostPayload;
           if (payload.category !== f.category) return false;
         }
 

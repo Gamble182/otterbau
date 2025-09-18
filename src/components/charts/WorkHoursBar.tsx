@@ -10,9 +10,18 @@ import {
   Cell,
 } from "recharts";
 import { useEntries } from "@/store/useEntries";
+import { WorkPayload } from "@/lib/schemas/zod";
 
 // Custom Tooltip Component with Sony colors
-function CustomTooltip({ active, payload, label }: any) {
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    value: number;
+  }>;
+  label?: string;
+}
+
+function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (active && payload && payload.length) {
     return (
       <div className="bg-[var(--bg-surface-elevated)] backdrop-blur-xl p-4 rounded-xl shadow-xl border border-[var(--border-emphasis)]">
@@ -62,7 +71,7 @@ export default function WorkHoursBar() {
     for (const e of items.filter((e) => e.type === "work")) {
       const k = e.date.slice(0, 10);
       const d = days.find((x) => x.key === k);
-      if (d) d.value += (e.payload as any).hours ?? 0;
+      if (d) d.value += (e.payload as WorkPayload).hours ?? 0;
     }
 
     return days;

@@ -2,6 +2,7 @@
 import { useMemo } from "react";
 import { ResponsiveContainer, PieChart, Pie, Tooltip, Cell } from "recharts";
 import { useEntries } from "@/store/useEntries";
+import { ExpensePayload } from "@/lib/schemas/zod";
 
 type Props = {
   from?: string;
@@ -21,8 +22,24 @@ const PIE_COLORS = [
   "var(--charcoal)", // Charcoal
 ];
 
+interface PieChartData {
+  name: string;
+  value: number;
+  percentage: number;
+  fill?: string;
+}
+
 // Custom Tooltip Component with Sony styling
-function CustomTooltip({ active, payload }: any) {
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    name: string;
+    value: number;
+    payload: PieChartData;
+  }>;
+}
+
+function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (active && payload && payload.length) {
     const data = payload[0];
     return (
@@ -59,7 +76,7 @@ export default function ExpensesByCategoryPie({ from, to, topN = 8 }: Props) {
       if (from && e.date < from) continue;
       if (to && e.date > to) continue;
 
-      const p: any = e.payload;
+      const p = e.payload as ExpensePayload;
       const cat = (p.category ?? "Unkategorisiert").toString();
       const val = Number(p.total ?? 0);
       map.set(cat, (map.get(cat) ?? 0) + val);

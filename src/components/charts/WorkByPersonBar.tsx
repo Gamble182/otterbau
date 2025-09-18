@@ -10,6 +10,7 @@ import {
   Cell,
 } from "recharts";
 import { useEntries } from "@/store/useEntries";
+import { WorkPayload } from "@/lib/schemas/zod";
 
 type Props = {
   from?: string;
@@ -17,8 +18,21 @@ type Props = {
   topN?: number;
 };
 
+interface PersonWorkData {
+  name: string;
+  fullName: string;
+  value: number;
+}
+
 // Custom Tooltip Component with Sony styling
-function CustomTooltip({ active, payload }: any) {
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: PersonWorkData;
+  }>;
+}
+
+function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
@@ -52,7 +66,7 @@ export default function WorkByPersonBar({ from, to, topN = 10 }: Props) {
       if (from && e.date < from) continue;
       if (to && e.date > to) continue;
 
-      const p = e.payload as any;
+      const p = e.payload as WorkPayload;
       const key = p.personName ?? "Unbekannt";
       const hours = Number(p.hours ?? 0);
       byPerson.set(key, (byPerson.get(key) ?? 0) + hours);

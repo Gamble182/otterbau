@@ -14,8 +14,6 @@ import AppShell from "@/components/AppShell";
 import type { FilterState } from "@/components/Filters";
 
 import { useEntries } from "@/store/useEntries";
-import { usePersons } from "@/store/usePersons";
-import { isoDate, isoNow } from "@/lib/utils";
 
 const TABS = [
   {
@@ -112,60 +110,7 @@ function HomePage() {
 
   // Stores
   const allEntries = useEntries((s) => s.items);
-  const addEntry = useEntries((s) => s.add);
-  const persons = usePersons((s) => s.items);
 
-  // Quick-Add Actions
-  async function addWork() {
-    const p = persons[0];
-    if (!p) {
-      alert("Bitte zuerst eine Person anlegen.");
-      return;
-    }
-
-    try {
-      await addEntry({
-        type: "work",
-        date: isoDate(),
-        tags: [],
-        payload: {
-          personId: p.id,
-          personName: p.name,
-          hours: 1.0,
-          note: "Schnellerfassung",
-        },
-        createdAt: isoNow(),
-        updatedAt: isoNow(),
-      } as any);
-    } catch (error) {
-      console.error("Fehler beim Hinzufügen:", error);
-      alert("Fehler beim Speichern. Bitte versuche es erneut.");
-    }
-  }
-
-  async function addExpense() {
-    try {
-      await addEntry({
-        type: "expense",
-        date: isoDate(),
-        tags: ["Material"],
-        payload: {
-          position: "Material",
-          category: "Baustelle",
-          qty: 1,
-          unitPrice: 25,
-          total: 25,
-          currency: "EUR",
-          buyer: "Schnellerfassung",
-        },
-        createdAt: isoNow(),
-        updatedAt: isoNow(),
-      } as any);
-    } catch (error) {
-      console.error("Fehler beim Hinzufügen:", error);
-      alert("Fehler beim Speichern. Bitte versuche es erneut.");
-    }
-  }
 
   // Stats calculation
   const stats = useMemo(() => {
@@ -181,17 +126,19 @@ function HomePage() {
       monthHours = 0;
     let weekExpenses = 0,
       monthExpenses = 0;
-    let totalEntries = allEntries.length;
+    const totalEntries = allEntries.length;
 
     for (const e of allEntries) {
       const d = new Date(e.date);
       if (e.type === "work") {
-        const h = Number((e.payload as any).hours ?? 0);
+        const payload = e.payload as { hours?: number };
+        const h = Number(payload.hours ?? 0);
         if (e.date.startsWith(isoToday)) todayHours += h;
         if (d >= startOfWeek) weekHours += h;
         if (d >= startOfMonth) monthHours += h;
       } else if (e.type === "expense") {
-        const v = Number((e.payload as any).total ?? 0);
+        const payload = e.payload as { total?: number };
+        const v = Number(payload.total ?? 0);
         if (d >= startOfWeek) weekExpenses += v;
         if (d >= startOfMonth) monthExpenses += v;
       }
@@ -460,7 +407,10 @@ function HomePage() {
                 value={`€${Math.max(
                   ...allEntries
                     .filter((e) => e.type === "expense")
-                    .map((e) => Number((e.payload as any).total) || 0),
+                    .map((e) => {
+                      const payload = e.payload as { total?: number };
+                      return Number(payload.total) || 0;
+                    }),
                   0
                 ).toFixed(0)}`}
                 change="Einzelposten"
