@@ -1,26 +1,32 @@
 "use client";
 import { useState } from "react";
 import React from "react";
-import Dialog from "./Dialog";
+import Modal from "./Modal";
 import { useEntries } from "@/store/useEntries";
 import { usePersons } from "@/store/usePersons";
 import { isoDate, isoNow } from "@/lib/utils";
 import type { Entry, WorkPayload, ExpensePayload } from "@/lib/schemas/zod";
 
 export default function QuickAdd() {
-  const [open, setOpen] = useState(false);
-  const [type, setType] = useState<"work" | "expense">("work");
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeType, setActiveType] = useState<"work" | "expense">("work");
+
+  const openModal = (type: "work" | "expense") => {
+    setActiveType(type);
+    setIsOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsOpen(false);
+  };
 
   return (
     <>
-      {/* Desktop Buttons - Sony Style */}
+      {/* Desktop Buttons */}
       <div className="hidden sm:flex gap-3">
         <button
           className="btn btn-primary animate-scale-in"
-          onClick={() => {
-            setType("work");
-            setOpen(true);
-          }}
+          onClick={() => openModal("work")}
         >
           <svg
             className="w-4 h-4"
@@ -41,10 +47,7 @@ export default function QuickAdd() {
         <button
           className="btn btn-success animate-scale-in"
           style={{ animationDelay: "100ms" }}
-          onClick={() => {
-            setType("expense");
-            setOpen(true);
-          }}
+          onClick={() => openModal("expense")}
         >
           <svg
             className="w-4 h-4"
@@ -63,112 +66,194 @@ export default function QuickAdd() {
         </button>
       </div>
 
-      {/* Mobile FAB - Sony Style */}
-      <button
-        onClick={() => {
-          setType("work");
-          setOpen(true);
-        }}
-        className="sm:hidden fixed bottom-20 right-4 w-14 h-14 bg-gradient-accent text-white rounded-full shadow-xl hover:shadow-2xl active:scale-90 transition-all z-40 flex items-center justify-center backdrop-blur-sm animate-scale-in"
-        style={{
-          filter: "drop-shadow(0 4px 16px rgba(253, 184, 99, 0.3))",
-        }}
-      >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+      {/* Mobile FAB */}
+      <div className="sm:hidden fixed bottom-20 right-4 flex flex-col gap-3 z-40">
+        {/* Hauptbutton für Arbeitszeit (häufiger genutzt) */}
+        <button
+          onClick={() => openModal("work")}
+          className="w-14 h-14 bg-gradient-accent text-white rounded-full shadow-xl hover:shadow-2xl active:scale-90 transition-all flex items-center justify-center backdrop-blur-sm animate-scale-in"
+          style={{
+            filter: "drop-shadow(0 4px 16px rgba(253, 184, 99, 0.3))",
+          }}
+          aria-label="Arbeitszeit erfassen"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2.5}
-            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-          />
-        </svg>
-      </button>
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2.5}
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        </button>
 
-      {/* Dialog - Updated für Sony Design */}
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        title={type === "work" ? "Arbeitszeit erfassen" : "Ausgabe erfassen"}
+        {/* Sekundärbutton für Ausgaben */}
+        <button
+          onClick={() => openModal("expense")}
+          className="w-12 h-12 bg-gradient-warm text-white rounded-full shadow-lg hover:shadow-xl active:scale-90 transition-all flex items-center justify-center backdrop-blur-sm animate-scale-in"
+          style={{
+            animationDelay: "150ms",
+            filter: "drop-shadow(0 4px 12px rgba(232, 90, 43, 0.3))",
+          }}
+          aria-label="Ausgabe erfassen"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2.5}
+              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+            />
+          </svg>
+        </button>
+      </div>
+
+      {/* Modal */}
+      <Modal
+        isOpen={isOpen}
+        onClose={closeModal}
+        title={
+          activeType === "work" ? "Arbeitszeit erfassen" : "Ausgabe erfassen"
+        }
         subtitle={
-          type === "work"
+          activeType === "work"
             ? "Neue Arbeitsstunden hinzufügen"
             : "Neue Ausgabe dokumentieren"
         }
-        maxWidth="lg"
+        size="lg"
       >
-        {type === "work" ? (
-          <WorkForm onDone={() => setOpen(false)} />
+        {activeType === "work" ? (
+          <WorkForm onSuccess={closeModal} />
         ) : (
-          <ExpenseForm onDone={() => setOpen(false)} />
+          <ExpenseForm onSuccess={closeModal} />
         )}
-      </Dialog>
+      </Modal>
     </>
   );
 }
 
-function WorkForm({ onDone }: { onDone: () => void }) {
+// Work Form Component
+function WorkForm({ onSuccess }: { onSuccess: () => void }) {
   const persons = usePersons((s) => s.items);
   const add = useEntries((s) => s.add);
-  const [personId, setPersonId] = useState(persons[0]?.id ?? "");
-  const [hours, setHours] = useState("1.0");
-  const [note, setNote] = useState("");
-  const [project, setProject] = useState("");
-  const [date, setDate] = useState(isoDate());
+
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    personId: "",
+    hours: "8",
+    note: "",
+    project: "",
+    date: isoDate(),
+  });
 
-  async function submit() {
-    const p = persons.find((x) => x.id === personId);
-    if (!p) return alert("Bitte Person wählen");
+  // Auto-select "Yannik" when persons load
+  React.useEffect(() => {
+    if (persons.length > 0 && !formData.personId) {
+      const yannik = persons.find((p) => p.name === "Yannik");
+      const defaultPerson = yannik || persons[0];
+      setFormData((prev) => ({ ...prev, personId: defaultPerson.id }));
+    }
+  }, [persons, formData.personId]);
 
-    const hrs = Number(hours.replace(",", "."));
-    if (isNaN(hrs) || hrs <= 0) return alert("Bitte gültige Stunden eingeben");
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const person = persons.find((x) => x.id === formData.personId);
+    if (!person) {
+      alert("Bitte Person wählen");
+      return;
+    }
+
+    const hours = Number(formData.hours);
+    if (isNaN(hours) || hours <= 0) {
+      alert("Bitte gültige Stunden eingeben");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       await add({
         type: "work",
-        date,
-        tags: project ? [project] : [],
+        date: formData.date,
+        tags: formData.project ? [formData.project] : [],
         payload: {
-          personId: p.id,
-          personName: p.name,
-          hours: hrs,
-          note,
-          project,
+          personId: person.id,
+          personName: person.name,
+          hours,
+          note: formData.note,
+          project: formData.project,
         } as WorkPayload,
         createdAt: isoNow(),
         updatedAt: isoNow(),
-      } as Omit<Entry, 'id'>);
-      onDone();
+      } as Omit<Entry, "id">);
+
+      onSuccess();
+    } catch (error) {
+      console.error("Fehler beim Speichern:", error);
+      alert("Fehler beim Speichern");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  if (persons.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <div className="w-16 h-16 mx-auto bg-[var(--bg-secondary)] rounded-full flex items-center justify-center mb-4">
+          <svg
+            className="w-8 h-8 text-[var(--text-tertiary)]"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+            />
+          </svg>
+        </div>
+        <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
+          Keine Personen vorhanden
+        </h3>
+        <p className="text-[var(--text-secondary)] mb-4">
+          Füge erst eine Person in den Einstellungen hinzu.
+        </p>
+      </div>
+    );
   }
 
   return (
-    <form
-      className="space-y-6 animate-fade-in"
-      onSubmit={(e) => {
-        e.preventDefault();
-        void submit();
-      }}
-    >
+    <form onSubmit={handleSubmit} className="space-y-6">
       {/* Person & Date */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <label className="form-label">
-            <span className="flex items-center gap-2">👤 Person</span>
+            <span className="flex items-center gap-2">
+              <span className="text-lg">👤</span>
+              Person
+            </span>
           </label>
           <select
-            value={personId}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPersonId(e.target.value)}
+            value={formData.personId}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, personId: e.target.value }))
+            }
             className="form-select"
+            required
           >
+            <option value="">Person wählen...</option>
             {persons.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -179,13 +264,19 @@ function WorkForm({ onDone }: { onDone: () => void }) {
 
         <div className="space-y-2">
           <label className="form-label">
-            <span className="flex items-center gap-2">📅 Datum</span>
+            <span className="flex items-center gap-2">
+              <span className="text-lg">📅</span>
+              Datum
+            </span>
           </label>
           <input
             type="date"
-            value={date}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDate(e.target.value)}
+            value={formData.date}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, date: e.target.value }))
+            }
             className="form-input"
+            required
           />
         </div>
       </div>
@@ -194,31 +285,41 @@ function WorkForm({ onDone }: { onDone: () => void }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <label className="form-label">
-            <span className="flex items-center gap-2">⏰ Stunden</span>
+            <span className="flex items-center gap-2">
+              <span className="text-lg">⏰</span>
+              Stunden
+            </span>
           </label>
           <input
             type="number"
-            step="0.1"
+            step="1"
             min="0"
-            value={hours}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHours(e.target.value)}
-            className="form-input"
-            placeholder="z.B. 2.5"
+            max="16"
+            value={formData.hours}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, hours: e.target.value }))
+            }
+            className="form-input text-lg font-semibold"
+            placeholder="z.B. 8"
+            required
           />
         </div>
 
         <div className="space-y-2">
           <label className="form-label">
             <span className="flex items-center gap-2">
-              🏗️ Projekt{" "}
-              <span className="text-[var(--text-tertiary)] text-xs">
+              <span className="text-lg">🏗️</span>
+              Projekt{" "}
+              <span className="text-[var(--text-tertiary)] text-xs font-normal">
                 (optional)
               </span>
             </span>
           </label>
           <input
-            value={project}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProject(e.target.value)}
+            value={formData.project}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, project: e.target.value }))
+            }
             className="form-input"
             placeholder="z.B. Küche, Bad, Dach"
           />
@@ -229,40 +330,45 @@ function WorkForm({ onDone }: { onDone: () => void }) {
       <div className="space-y-2">
         <label className="form-label">
           <span className="flex items-center gap-2">
-            📝 Notiz{" "}
-            <span className="text-[var(--text-tertiary)] text-xs">
+            <span className="text-lg">📝</span>
+            Notiz{" "}
+            <span className="text-[var(--text-tertiary)] text-xs font-normal">
               (optional)
             </span>
           </span>
         </label>
         <textarea
           rows={3}
-          value={note}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNote(e.target.value)}
+          value={formData.note}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, note: e.target.value }))
+          }
           className="form-textarea"
           placeholder="Was wurde gemacht?"
         />
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-subtle)]">
-        <button type="button" onClick={onDone} className="btn btn-ghost">
+      <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-[var(--border-subtle)]">
+        <button
+          type="button"
+          onClick={onSuccess}
+          className="btn btn-secondary order-2 sm:order-1"
+        >
           Abbrechen
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`btn btn-primary ${
-            isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+          className="btn btn-primary order-1 sm:order-2 flex-1 sm:flex-initial"
         >
           {isSubmitting ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2">
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               Speichert...
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2">
               <svg
                 className="w-4 h-4"
                 fill="none"
@@ -285,99 +391,139 @@ function WorkForm({ onDone }: { onDone: () => void }) {
   );
 }
 
-function ExpenseForm({ onDone }: { onDone: () => void }) {
+// Expense Form Component
+function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
   const add = useEntries((s) => s.add);
-  const [position, setPosition] = useState("");
-  const [category, setCategory] = useState("Werkzeug");
-  const [qty, setQty] = useState("1");
-  const [price, setPrice] = useState("");
-  const [buyer, setBuyer] = useState("Yannik");
-  const [date, setDate] = useState(isoDate());
-  const [note, setNote] = useState("");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    position: "",
+    manufacturer: "",
+    category: "🔧 Werkzeug",
+    type: "",
+    extra: "",
+    apartment: "",
+    buyer: "Yannik",
+    qty: "1",
+    price: "",
+    date: isoDate(),
+    note: "",
+  });
 
-  async function submit() {
-    if (!position.trim()) return alert("Bitte Position eingeben");
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-    const q = Number(qty.replace(",", "."));
-    const up = Number(price.replace(",", "."));
+    if (!formData.position.trim()) {
+      alert("Bitte Position eingeben");
+      return;
+    }
 
-    if (isNaN(q) || q <= 0) return alert("Bitte gültige Menge eingeben");
-    if (isNaN(up) || up < 0) return alert("Bitte gültigen Preis eingeben");
+    const qty = Number(formData.qty.replace(",", "."));
+    const unitPrice = Number(formData.price.replace(",", "."));
+
+    if (isNaN(qty) || qty <= 0) {
+      alert("Bitte gültige Menge eingeben");
+      return;
+    }
+    if (isNaN(unitPrice) || unitPrice < 0) {
+      alert("Bitte gültigen Preis eingeben");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       await add({
         type: "expense",
-        date,
-        tags: [category],
+        date: formData.date,
+        tags: [formData.category],
         payload: {
-          position: position.trim(),
-          category,
-          qty: q,
-          unitPrice: up,
-          total: q * up,
+          position: formData.position.trim(),
+          manufacturer: formData.manufacturer.trim() || undefined,
+          category: formData.category,
+          type: formData.type.trim() || undefined,
+          extra: formData.extra.trim() || undefined,
+          apartment: formData.apartment.trim() || undefined,
+          qty,
+          unitPrice,
+          total: qty * unitPrice,
           currency: "EUR",
-          buyer,
-          note,
+          buyer: formData.buyer,
+          note: formData.note.trim() || undefined,
         } as ExpensePayload,
         createdAt: isoNow(),
         updatedAt: isoNow(),
-      } as Omit<Entry, 'id'>);
-      onDone();
+      } as Omit<Entry, "id">);
+
+      onSuccess();
+    } catch (error) {
+      console.error("Fehler beim Speichern:", error);
+      alert("Fehler beim Speichern");
     } finally {
       setIsSubmitting(false);
     }
-  }
+  };
 
   const total =
-    Number(qty.replace(",", ".") || "0") *
-    Number(price.replace(",", ".") || "0");
+    Number(formData.qty.replace(",", ".") || "0") *
+    Number(formData.price.replace(",", ".") || "0");
 
   return (
-    <form
-      className="space-y-6 animate-fade-in"
-      onSubmit={(e) => {
-        e.preventDefault();
-        void submit();
-      }}
-    >
-      {/* Position & Date */}
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Position & Hersteller */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <label className="form-label">
-            <span className="flex items-center gap-2">🏷️ Position *</span>
+            <span className="flex items-center gap-2">
+              <span className="text-lg">🏷️</span>
+              Position *
+            </span>
           </label>
           <input
-            value={position}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPosition(e.target.value)}
-            className="form-input"
+            value={formData.position}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, position: e.target.value }))
+            }
+            className="form-input text-lg font-semibold"
             placeholder="z.B. Bohrmaschine, Material, Farbe"
+            required
           />
         </div>
 
         <div className="space-y-2">
           <label className="form-label">
-            <span className="flex items-center gap-2">📅 Datum</span>
+            <span className="flex items-center gap-2">
+              <span className="text-lg">🏭</span>
+              Hersteller{" "}
+              <span className="text-[var(--text-tertiary)] text-xs font-normal">
+                (optional)
+              </span>
+            </span>
           </label>
           <input
-            type="date"
-            value={date}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDate(e.target.value)}
+            value={formData.manufacturer}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, manufacturer: e.target.value }))
+            }
             className="form-input"
+            placeholder="z.B. Bosch, Makita, Festool"
           />
         </div>
       </div>
 
-      {/* Category & Buyer */}
+      {/* Kategorie & Art */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <label className="form-label">
-            <span className="flex items-center gap-2">📂 Kategorie</span>
+            <span className="flex items-center gap-2">
+              <span className="text-lg">📂</span>
+              Kategorie
+            </span>
           </label>
           <select
-            value={category}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCategory(e.target.value)}
+            value={formData.category}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, category: e.target.value }))
+            }
             className="form-select"
           >
             <option>🔧 Werkzeug</option>
@@ -385,101 +531,222 @@ function ExpenseForm({ onDone }: { onDone: () => void }) {
             <option>🏗️ Baustelle</option>
             <option>⚡ Elektrik</option>
             <option>🚿 Sanitär</option>
+            <option>🎨 Farbe & Lack</option>
+            <option>🚪 Türen & Fenster</option>
+            <option>🔩 Schrauben & Befestigung</option>
             <option>📦 Sonstiges</option>
           </select>
         </div>
 
         <div className="space-y-2">
           <label className="form-label">
-            <span className="flex items-center gap-2">👤 Käufer</span>
+            <span className="flex items-center gap-2">
+              <span className="text-lg">🏷️</span>
+              Art{" "}
+              <span className="text-[var(--text-tertiary)] text-xs font-normal">
+                (optional)
+              </span>
+            </span>
           </label>
           <input
-            value={buyer}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBuyer(e.target.value)}
+            value={formData.type}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, type: e.target.value }))
+            }
             className="form-input"
-            placeholder="Name des Käufers"
+            placeholder="z.B. Elektrowerkzeug, Handwerkzeug"
           />
         </div>
       </div>
 
-      {/* Qty, Price & Total */}
-      <div className="grid grid-cols-3 gap-4">
+      {/* Zusatz & Wohnung */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <label className="form-label">
-            <span className="flex items-center gap-2">📊 Menge</span>
+            <span className="flex items-center gap-2">
+              <span className="text-lg">➕</span>
+              Zusatz{" "}
+              <span className="text-[var(--text-tertiary)] text-xs font-normal">
+                (optional)
+              </span>
+            </span>
+          </label>
+          <input
+            value={formData.extra}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, extra: e.target.value }))
+            }
+            className="form-input"
+            placeholder="z.B. + 2x 4,0Ah Akku"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="form-label">
+            <span className="flex items-center gap-2">
+              <span className="text-lg">🏠</span>
+              Wohnung{" "}
+              <span className="text-[var(--text-tertiary)] text-xs font-normal">
+                (optional)
+              </span>
+            </span>
+          </label>
+          <select
+            value={formData.apartment}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, apartment: e.target.value }))
+            }
+            className="form-select"
+          >
+            <option value="">Wohnung wählen...</option>
+            <option>🏠 EG - Erdgeschoss</option>
+            <option>🏠 OG - Obergeschoss</option>
+            <option>🏠 DG - Dachgeschoss</option>
+            <option>🏠 KG - Keller</option>
+            <option>🌿 Außenbereich</option>
+            <option>🚗 Garage</option>
+            <option>🏗️ Allgemein</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Datum & Käufer */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="form-label">
+            <span className="flex items-center gap-2">
+              <span className="text-lg">📅</span>
+              Datum
+            </span>
+          </label>
+          <input
+            type="date"
+            value={formData.date}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, date: e.target.value }))
+            }
+            className="form-input"
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="form-label">
+            <span className="flex items-center gap-2">
+              <span className="text-lg">👤</span>
+              Käufer
+            </span>
+          </label>
+          <input
+            value={formData.buyer}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, buyer: e.target.value }))
+            }
+            className="form-input"
+            placeholder="Name des Käufers"
+            required
+          />
+        </div>
+      </div>
+
+      {/* Menge, Preis pro Stück & Summe */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <label className="form-label text-sm">
+            <span className="flex items-center gap-1">
+              <span>📊</span>
+              Menge
+            </span>
           </label>
           <input
             type="number"
             step="0.1"
             min="0"
-            value={qty}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQty(e.target.value)}
-            className="form-input"
+            value={formData.qty}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, qty: e.target.value }))
+            }
+            className="form-input text-center font-semibold"
+            required
           />
         </div>
 
         <div className="space-y-2">
-          <label className="form-label">
-            <span className="flex items-center gap-2">💰 Einzelpreis €</span>
+          <label className="form-label text-sm">
+            <span className="flex items-center gap-1">
+              <span>💰</span>
+              Preis €
+            </span>
           </label>
           <input
             type="number"
             step="0.01"
             min="0"
-            value={price}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrice(e.target.value)}
-            className="form-input"
+            value={formData.price}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, price: e.target.value }))
+            }
+            className="form-input text-center font-semibold"
+            required
           />
         </div>
 
         <div className="space-y-2">
-          <label className="form-label">
-            <span className="flex items-center gap-2">💸 Gesamt €</span>
+          <label className="form-label text-sm">
+            <span className="flex items-center gap-1">
+              <span>💸</span>
+              Summe €
+            </span>
           </label>
-          <div className="w-full px-4 py-3 rounded-xl border-2 border-[var(--coral-red)]/20 bg-gradient-to-r from-[var(--coral-red)]/5 to-[var(--deep-red)]/5 font-bold text-right text-lg text-[var(--coral-red)]">
+          <div className="w-full px-3 py-3 rounded-xl border-2 border-[var(--coral-red)]/30 bg-gradient-to-r from-[var(--coral-red)]/10 to-[var(--deep-red)]/10 font-bold text-center text-lg text-[var(--coral-red)]">
             {total.toFixed(2)}
           </div>
         </div>
       </div>
 
-      {/* Note */}
+      {/* Notiz */}
       <div className="space-y-2">
         <label className="form-label">
           <span className="flex items-center gap-2">
-            📝 Notiz{" "}
-            <span className="text-[var(--text-tertiary)] text-xs">
+            <span className="text-lg">📝</span>
+            Notiz{" "}
+            <span className="text-[var(--text-tertiary)] text-xs font-normal">
               (optional)
             </span>
           </span>
         </label>
         <textarea
           rows={2}
-          value={note}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNote(e.target.value)}
+          value={formData.note}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, note: e.target.value }))
+          }
           className="form-textarea"
           placeholder="Zusätzliche Informationen..."
         />
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-subtle)]">
-        <button type="button" onClick={onDone} className="btn btn-ghost">
+      <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-[var(--border-subtle)]">
+        <button
+          type="button"
+          onClick={onSuccess}
+          className="btn btn-secondary order-2 sm:order-1"
+        >
           Abbrechen
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`btn btn-success ${
-            isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+          className="btn btn-success order-1 sm:order-2 flex-1 sm:flex-initial"
         >
           {isSubmitting ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2">
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               Speichert...
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2">
               <svg
                 className="w-4 h-4"
                 fill="none"
