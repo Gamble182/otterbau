@@ -25,10 +25,40 @@ interface FilterState {
   buyer: string;
 }
 
+// Hilfsfunktion für Tausender-Trennzeichen
+const formatNumber = (num: number | undefined): string => {
+  if (num === undefined || num === null) return "0";
+  return new Intl.NumberFormat("de-DE", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(num);
+};
+
+// Hilfsfunktion für Währungsformatierung
+const formatCurrency = (num: number | undefined): string => {
+  if (num === undefined || num === null) return "0,00€";
+  return new Intl.NumberFormat("de-DE", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(num);
+};
+
+// Hilfsfunktion für Wochentag
+const getWeekday = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("de-DE", { weekday: "short" });
+};
+
 export default function EntriesPage() {
   const entries = useEntries((s) => s.items);
   const persons = usePersons((s) => s.items);
   const removeEntry = useEntries((s) => s.remove);
+
+  // Lazy Loading States
+  const [workEntriesLimit, setWorkEntriesLimit] = useState(20);
+  const [expenseEntriesLimit, setExpenseEntriesLimit] = useState(20);
 
   // Filter & Sort States
   const [filter, setFilter] = useState<FilterState>({
@@ -42,11 +72,11 @@ export default function EntriesPage() {
   });
 
   const [workSort, setWorkSort] = useState<TableSort>({
-    key: "createdAt",
+    key: "date",
     order: "desc",
   });
   const [expenseSort, setExpenseSort] = useState<TableSort>({
-    key: "createdAt",
+    key: "date",
     order: "desc",
   });
 
@@ -230,16 +260,20 @@ export default function EntriesPage() {
     });
   }, [entries, filter, expenseSort]);
 
+  // Lazy loading slices
+  const displayedWorkEntries = workEntries.slice(0, workEntriesLimit);
+  const displayedExpenseEntries = expenseEntries.slice(0, expenseEntriesLimit);
+
   // Handle delete with confirmation
   const handleDelete = async (entry: Entry) => {
     const entryName =
       entry.type === "work"
-        ? `${(entry.payload as WorkPayload).personName} - ${
+        ? `${(entry.payload as WorkPayload).personName} - ${formatNumber(
             (entry.payload as WorkPayload).hours
-          }h`
-        : `${(entry.payload as ExpensePayload).position} - ${(
-            entry.payload as ExpensePayload
-          ).total?.toFixed(2)}€`;
+          )}h`
+        : `${(entry.payload as ExpensePayload).position} - ${formatCurrency(
+            (entry.payload as ExpensePayload).total
+          )}`;
 
     const confirmed = window.confirm(
       `Möchtest du diesen Eintrag wirklich löschen?\n\n"${entryName}"\n\nDiese Aktion kann nicht rückgängig gemacht werden.`
@@ -278,15 +312,6 @@ export default function EntriesPage() {
       day: "2-digit",
       month: "2-digit",
       year: "2-digit",
-    });
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("de-DE", {
-      day: "2-digit",
-      month: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
     });
   };
 
@@ -330,8 +355,8 @@ export default function EntriesPage() {
               Alle Einträge
             </h1>
             <p className="text-[var(--text-secondary)] mt-1">
-              {workEntries.length} Arbeitszeit-Einträge •{" "}
-              {expenseEntries.length} Ausgaben-Einträge
+              {formatNumber(workEntries.length)} Arbeitszeit-Einträge •{" "}
+              {formatNumber(expenseEntries.length)} Ausgaben-Einträge
             </p>
           </div>
         </div>
@@ -427,7 +452,7 @@ export default function EntriesPage() {
                   <option value="">Alle Personen</option>
                   {persons.map((person) => (
                     <option key={person.id} value={person.name}>
-                      👤 {person.name}
+                      {person.name}
                     </option>
                   ))}
                 </select>
@@ -468,7 +493,7 @@ export default function EntriesPage() {
                   <option value="">Alle Hersteller</option>
                   {filterOptions.manufacturers.map((mfr) => (
                     <option key={mfr} value={mfr}>
-                      🏭 {mfr}
+                      {mfr}
                     </option>
                   ))}
                 </select>
@@ -487,7 +512,7 @@ export default function EntriesPage() {
                   <option value="">Alle Käufer</option>
                   {filterOptions.buyers.map((buyer) => (
                     <option key={buyer} value={buyer}>
-                      👤 {buyer}
+                      {buyer}
                     </option>
                   ))}
                 </select>
@@ -556,7 +581,7 @@ export default function EntriesPage() {
                 />
               </svg>
               <span className="font-medium">
-                Arbeitszeit ({workEntries.length})
+                Arbeitszeit ({formatNumber(workEntries.length)})
               </span>
             </button>
             <button
@@ -577,7 +602,7 @@ export default function EntriesPage() {
                 />
               </svg>
               <span className="font-medium">
-                Ausgaben ({expenseEntries.length})
+                Ausgaben ({formatNumber(expenseEntries.length)})
               </span>
             </button>
           </div>
@@ -585,538 +610,597 @@ export default function EntriesPage() {
 
         {/* Work Entries Table */}
         {activeTab === "work" && (
-          <Card
-            title={`Arbeitszeit-Einträge (${workEntries.length})`}
-            subtitle={`Gesamt: ${workEntries
-              .reduce(
-                (sum, e) => sum + ((e.payload as WorkPayload).hours || 0),
-                0
-              )
-              .toFixed(1)}h`}
-          >
-            {workEntries.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto bg-[var(--accent-primary)]/10 rounded-full flex items-center justify-center mb-4">
-                  <svg
-                    className="w-8 h-8 text-[var(--accent-primary)]"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+          <div className="max-w-none -mx-4 px-4 lg:-mx-8 lg:px-8">
+            <Card
+              title={`Arbeitszeit-Einträge (${formatNumber(
+                workEntries.length
+              )})`}
+              subtitle={`Gesamt: ${formatNumber(
+                workEntries.reduce(
+                  (sum, e) => sum + ((e.payload as WorkPayload).hours || 0),
+                  0
+                )
+              )}h`}
+            >
+              {workEntries.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 mx-auto bg-[var(--accent-primary)]/10 rounded-full flex items-center justify-center mb-4">
+                    <svg
+                      className="w-8 h-8 text-[var(--accent-primary)]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
+                    Keine Arbeitszeit-Einträge gefunden
+                  </h3>
+                  <p className="text-[var(--text-secondary)]">
+                    Versuche deine Filter zu ändern oder erstelle neue Einträge.
+                  </p>
                 </div>
-                <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
-                  Keine Arbeitszeit-Einträge gefunden
-                </h3>
-                <p className="text-[var(--text-secondary)]">
-                  Versuche deine Filter zu ändern oder erstelle neue Einträge.
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-[var(--border-subtle)] text-left">
-                      <th
-                        className="pb-3 text-sm font-semibold text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors"
-                        onClick={() =>
-                          handleSort("work", "date", workSort, setWorkSort)
-                        }
-                      >
-                        <div className="flex items-center gap-2">
-                          Datum
-                          {workSort.key === "date" && (
-                            <svg
-                              className={`w-4 h-4 transition-transform ${
-                                workSort.order === "desc" ? "rotate-180" : ""
-                              }`}
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 15l7-7 7 7"
-                              />
-                            </svg>
-                          )}
-                        </div>
-                      </th>
-                      <th
-                        className="pb-3 text-sm font-semibold text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors"
-                        onClick={() =>
-                          handleSort("work", "name", workSort, setWorkSort)
-                        }
-                      >
-                        <div className="flex items-center gap-2">
-                          Person
-                          {workSort.key === "name" && (
-                            <svg
-                              className={`w-4 h-4 transition-transform ${
-                                workSort.order === "desc" ? "rotate-180" : ""
-                              }`}
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 15l7-7 7 7"
-                              />
-                            </svg>
-                          )}
-                        </div>
-                      </th>
-                      <th
-                        className="pb-3 text-sm font-semibold text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors text-right"
-                        onClick={() =>
-                          handleSort("work", "value", workSort, setWorkSort)
-                        }
-                      >
-                        <div className="flex items-center justify-end gap-2">
-                          Stunden
-                          {workSort.key === "value" && (
-                            <svg
-                              className={`w-4 h-4 transition-transform ${
-                                workSort.order === "desc" ? "rotate-180" : ""
-                              }`}
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 15l7-7 7 7"
-                              />
-                            </svg>
-                          )}
-                        </div>
-                      </th>
-                      <th className="pb-3 text-sm font-semibold text-[var(--text-secondary)]">
-                        Details
-                      </th>
-                      <th
-                        className="pb-3 text-sm font-semibold text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors"
-                        onClick={() =>
-                          handleSort("work", "createdAt", workSort, setWorkSort)
-                        }
-                      >
-                        <div className="flex items-center gap-2">
-                          Erstellt
-                          {workSort.key === "createdAt" && (
-                            <svg
-                              className={`w-4 h-4 transition-transform ${
-                                workSort.order === "desc" ? "rotate-180" : ""
-                              }`}
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 15l7-7 7 7"
-                              />
-                            </svg>
-                          )}
-                        </div>
-                      </th>
-                      <th className="pb-3 text-sm font-semibold text-[var(--text-secondary)]">
-                        Aktionen
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {workEntries.map((entry, index) => {
-                      const payload = entry.payload as WorkPayload;
-                      return (
-                        <tr
-                          key={entry.id}
-                          className={`border-b border-[var(--border-subtle)] hover:bg-[var(--bg-secondary)] transition-colors animate-fade-in`}
-                          style={{ animationDelay: `${index * 50}ms` }}
-                        >
-                          <td className="py-4 font-medium text-[var(--text-primary)]">
-                            {formatDate(entry.date)}
-                          </td>
-                          <td className="py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-gradient-accent flex items-center justify-center text-white text-sm font-bold">
-                                {payload.personName?.charAt(0) || "?"}
-                              </div>
-                              <span className="font-medium text-[var(--text-primary)]">
-                                {payload.personName || "Unbekannt"}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="py-4 text-right">
-                            <span className="font-bold text-lg text-[var(--accent-primary)]">
-                              {payload.hours?.toFixed(1) || "0"}h
-                            </span>
-                          </td>
-                          <td className="py-4 text-sm text-[var(--text-secondary)] max-w-xs">
-                            <div>
-                              {payload.project && (
-                                <div className="font-medium text-[var(--text-primary)] mb-1">
-                                  🏗️ {payload.project}
-                                </div>
-                              )}
-                              {payload.note && (
-                                <div className="truncate">{payload.note}</div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="overflow-x-auto -mx-6 px-6">
+                    <table className="w-full min-w-[800px] table-fixed">
+                      <colgroup>
+                        <col className="w-[200px]" />
+                        <col className="w-[130px]" />
+                        <col className="w-[100px]" />
+                        <col className="w-[120px]" />
+                        <col className="w-[80px]" />
+                      </colgroup>
+                      <thead>
+                        <tr className="border-b border-[var(--border-subtle)] text-left">
+                          <th
+                            className="pb-4 pt-2 text-sm font-semibold text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors"
+                            onClick={() =>
+                              handleSort("work", "name", workSort, setWorkSort)
+                            }
+                          >
+                            <div className="flex items-center gap-2">
+                              Person
+                              {workSort.key === "name" && (
+                                <svg
+                                  className={`w-4 h-4 transition-transform ${
+                                    workSort.order === "desc"
+                                      ? "rotate-180"
+                                      : ""
+                                  }`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 15l7-7 7 7"
+                                  />
+                                </svg>
                               )}
                             </div>
-                          </td>
-                          <td className="py-4 text-sm text-[var(--text-tertiary)]">
-                            {formatDateTime(entry.createdAt)}
-                          </td>
-                          <td className="py-4">
-                            <button
-                              onClick={() => handleDelete(entry)}
-                              className="p-2 hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg transition-colors"
-                              title="Eintrag löschen"
-                            >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
-                            </button>
-                          </td>
+                          </th>
+                          <th
+                            className="pb-4 pt-2 text-sm font-semibold text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors"
+                            onClick={() =>
+                              handleSort("work", "date", workSort, setWorkSort)
+                            }
+                          >
+                            <div className="flex items-center gap-2">
+                              Datum
+                              {workSort.key === "date" && (
+                                <svg
+                                  className={`w-4 h-4 transition-transform ${
+                                    workSort.order === "desc"
+                                      ? "rotate-180"
+                                      : ""
+                                  }`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 15l7-7 7 7"
+                                  />
+                                </svg>
+                              )}
+                            </div>
+                          </th>
+                          <th className="pb-4 pt-2 text-sm font-semibold text-[var(--text-secondary)]">
+                            Wochentag
+                          </th>
+                          <th
+                            className="pb-4 pt-2 text-sm font-semibold text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors text-right"
+                            onClick={() =>
+                              handleSort("work", "value", workSort, setWorkSort)
+                            }
+                          >
+                            <div className="flex items-center justify-end gap-2">
+                              Stunden
+                              {workSort.key === "value" && (
+                                <svg
+                                  className={`w-4 h-4 transition-transform ${
+                                    workSort.order === "desc"
+                                      ? "rotate-180"
+                                      : ""
+                                  }`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 15l7-7 7 7"
+                                  />
+                                </svg>
+                              )}
+                            </div>
+                          </th>
+                          <th className="pb-4 pt-2 text-sm font-semibold text-[var(--text-secondary)] text-center">
+                            Aktionen
+                          </th>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </Card>
+                      </thead>
+                      <tbody>
+                        {displayedWorkEntries.map((entry, index) => {
+                          const payload = entry.payload as WorkPayload;
+                          return (
+                            <tr
+                              key={entry.id}
+                              className={`border-b border-[var(--border-subtle)] hover:bg-[var(--bg-secondary)] transition-colors animate-fade-in`}
+                              style={{ animationDelay: `${index * 50}ms` }}
+                            >
+                              <td className="py-5">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-9 h-9 rounded-xl bg-gradient-accent flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                    {payload.personName?.charAt(0) || "?"}
+                                  </div>
+                                  <span className="font-medium text-[var(--text-primary)] truncate">
+                                    {payload.personName || "Unbekannt"}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="py-5 font-medium text-[var(--text-primary)]">
+                                {formatDate(entry.date)}
+                              </td>
+                              <td className="py-5 text-sm text-[var(--text-secondary)]">
+                                {getWeekday(entry.date)}
+                              </td>
+                              <td className="py-5 text-right">
+                                <span className="font-bold text-lg text-[var(--accent-primary)]">
+                                  {formatNumber(payload.hours || 0)}h
+                                </span>
+                              </td>
+                              <td className="py-5 text-center">
+                                <button
+                                  onClick={() => handleDelete(entry)}
+                                  className="p-2 hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg transition-colors"
+                                  title="Eintrag löschen"
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                  </svg>
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Lazy Loading Button for Work Entries */}
+                  {displayedWorkEntries.length < workEntries.length && (
+                    <div className="text-center pt-6">
+                      <button
+                        onClick={() => setWorkEntriesLimit((prev) => prev + 20)}
+                        className="btn btn-secondary"
+                      >
+                        Weitere{" "}
+                        {Math.min(
+                          20,
+                          workEntries.length - displayedWorkEntries.length
+                        )}{" "}
+                        Einträge laden
+                        <svg
+                          className="w-4 h-4 ml-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Card>
+          </div>
         )}
 
         {/* Expense Entries Table */}
+        {/* Expense Entries Table */}
         {activeTab === "expense" && (
-          <Card
-            title={`Ausgaben-Einträge (${expenseEntries.length})`}
-            subtitle={`Gesamt: ${expenseEntries
-              .reduce(
-                (sum, e) => sum + ((e.payload as ExpensePayload).total || 0),
-                0
-              )
-              .toFixed(2)}€`}
-          >
-            {expenseEntries.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto bg-[var(--coral-red)]/10 rounded-full flex items-center justify-center mb-4">
-                  <svg
-                    className="w-8 h-8 text-[var(--coral-red)]"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                    />
-                  </svg>
+          <div className="max-w-none -mx-4 px-4 lg:-mx-8 lg:px-8">
+            <Card
+              title={`Ausgaben-Einträge (${formatNumber(
+                expenseEntries.length
+              )})`}
+              subtitle={`Gesamt: ${formatCurrency(
+                expenseEntries.reduce(
+                  (sum, e) => sum + ((e.payload as ExpensePayload).total || 0),
+                  0
+                )
+              )}`}
+            >
+              {expenseEntries.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 mx-auto bg-[var(--coral-red)]/10 rounded-full flex items-center justify-center mb-4">
+                    <svg
+                      className="w-8 h-8 text-[var(--coral-red)]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
+                    Keine Ausgaben-Einträge gefunden
+                  </h3>
+                  <p className="text-[var(--text-secondary)]">
+                    Versuche deine Filter zu ändern oder erstelle neue Einträge.
+                  </p>
                 </div>
-                <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
-                  Keine Ausgaben-Einträge gefunden
-                </h3>
-                <p className="text-[var(--text-secondary)]">
-                  Versuche deine Filter zu ändern oder erstelle neue Einträge.
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-[var(--border-subtle)] text-left">
-                      <th
-                        className="pb-3 text-sm font-semibold text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors"
-                        onClick={() =>
-                          handleSort(
-                            "expense",
-                            "date",
-                            expenseSort,
-                            setExpenseSort
-                          )
-                        }
-                      >
-                        <div className="flex items-center gap-2">
-                          Datum
-                          {expenseSort.key === "date" && (
-                            <svg
-                              className={`w-4 h-4 transition-transform ${
-                                expenseSort.order === "desc" ? "rotate-180" : ""
-                              }`}
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 15l7-7 7 7"
-                              />
-                            </svg>
-                          )}
-                        </div>
-                      </th>
-                      <th
-                        className="pb-3 text-sm font-semibold text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors"
-                        onClick={() =>
-                          handleSort(
-                            "expense",
-                            "name",
-                            expenseSort,
-                            setExpenseSort
-                          )
-                        }
-                      >
-                        <div className="flex items-center gap-2">
-                          Position
-                          {expenseSort.key === "name" && (
-                            <svg
-                              className={`w-4 h-4 transition-transform ${
-                                expenseSort.order === "desc" ? "rotate-180" : ""
-                              }`}
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 15l7-7 7 7"
-                              />
-                            </svg>
-                          )}
-                        </div>
-                      </th>
-                      <th
-                        className="pb-3 text-sm font-semibold text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors"
-                        onClick={() =>
-                          handleSort(
-                            "expense",
-                            "category",
-                            expenseSort,
-                            setExpenseSort
-                          )
-                        }
-                      >
-                        <div className="flex items-center gap-2">
-                          Kategorie
-                          {expenseSort.key === "category" && (
-                            <svg
-                              className={`w-4 h-4 transition-transform ${
-                                expenseSort.order === "desc" ? "rotate-180" : ""
-                              }`}
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 15l7-7 7 7"
-                              />
-                            </svg>
-                          )}
-                        </div>
-                      </th>
-                      <th className="pb-3 text-sm font-semibold text-[var(--text-secondary)]">
-                        Details
-                      </th>
-                      <th
-                        className="pb-3 text-sm font-semibold text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors text-right"
-                        onClick={() =>
-                          handleSort(
-                            "expense",
-                            "value",
-                            expenseSort,
-                            setExpenseSort
-                          )
-                        }
-                      >
-                        <div className="flex items-center justify-end gap-2">
-                          Betrag
-                          {expenseSort.key === "value" && (
-                            <svg
-                              className={`w-4 h-4 transition-transform ${
-                                expenseSort.order === "desc" ? "rotate-180" : ""
-                              }`}
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 15l7-7 7 7"
-                              />
-                            </svg>
-                          )}
-                        </div>
-                      </th>
-                      <th
-                        className="pb-3 text-sm font-semibold text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors"
-                        onClick={() =>
-                          handleSort(
-                            "expense",
-                            "createdAt",
-                            expenseSort,
-                            setExpenseSort
-                          )
-                        }
-                      >
-                        <div className="flex items-center gap-2">
-                          Erstellt
-                          {expenseSort.key === "createdAt" && (
-                            <svg
-                              className={`w-4 h-4 transition-transform ${
-                                expenseSort.order === "desc" ? "rotate-180" : ""
-                              }`}
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 15l7-7 7 7"
-                              />
-                            </svg>
-                          )}
-                        </div>
-                      </th>
-                      <th className="pb-3 text-sm font-semibold text-[var(--text-secondary)]">
-                        Aktionen
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {expenseEntries.map((entry, index) => {
-                      const payload = entry.payload as ExpensePayload;
-                      return (
-                        <tr
-                          key={entry.id}
-                          className={`border-b border-[var(--border-subtle)] hover:bg-[var(--bg-secondary)] transition-colors animate-fade-in`}
-                          style={{ animationDelay: `${index * 50}ms` }}
-                        >
-                          <td className="py-4 font-medium text-[var(--text-primary)]">
-                            {formatDate(entry.date)}
-                          </td>
-                          <td className="py-4">
-                            <div>
-                              <div className="font-medium text-[var(--text-primary)] mb-1">
-                                {payload.position || "Unbekannte Position"}
-                              </div>
-                              {payload.manufacturer && (
-                                <div className="text-sm text-[var(--text-secondary)]">
-                                  🏭 {payload.manufacturer}
-                                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="overflow-x-auto -mx-6 px-6">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-[var(--border-subtle)] text-left">
+                          <th
+                            className="pb-3 pt-2 px-2 text-xs font-semibold text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors"
+                            style={{ width: "8%" }}
+                            onClick={() =>
+                              handleSort(
+                                "expense",
+                                "date",
+                                expenseSort,
+                                setExpenseSort
+                              )
+                            }
+                          >
+                            <div className="flex items-center gap-1">
+                              Datum
+                              {expenseSort.key === "date" && (
+                                <svg
+                                  className={`w-3 h-3 transition-transform ${
+                                    expenseSort.order === "desc"
+                                      ? "rotate-180"
+                                      : ""
+                                  }`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 15l7-7 7 7"
+                                  />
+                                </svg>
                               )}
                             </div>
-                          </td>
-                          <td className="py-4">
-                            <span className="filter-pill active text-xs">
-                              {payload.category || "Unkategorisiert"}
-                            </span>
-                          </td>
-                          <td className="py-4 text-sm text-[var(--text-secondary)] max-w-xs">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <span>👤 {payload.buyer || "Unbekannt"}</span>
-                                {payload.qty && payload.qty > 1 && (
-                                  <span className="text-[var(--text-tertiary)]">
-                                    • {payload.qty}x
-                                  </span>
-                                )}
-                              </div>
-                              {payload.type && (
-                                <div className="text-xs text-[var(--text-tertiary)]">
-                                  🏷️ {payload.type}
-                                </div>
-                              )}
-                              {payload.note && (
-                                <div className="text-xs truncate">
-                                  📝 {payload.note}
-                                </div>
+                          </th>
+                          <th
+                            className="pb-3 pt-2 px-2 text-xs font-semibold text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors"
+                            style={{ width: "18%" }}
+                            onClick={() =>
+                              handleSort(
+                                "expense",
+                                "name",
+                                expenseSort,
+                                setExpenseSort
+                              )
+                            }
+                          >
+                            <div className="flex items-center gap-1">
+                              Position
+                              {expenseSort.key === "name" && (
+                                <svg
+                                  className={`w-3 h-3 transition-transform ${
+                                    expenseSort.order === "desc"
+                                      ? "rotate-180"
+                                      : ""
+                                  }`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 15l7-7 7 7"
+                                  />
+                                </svg>
                               )}
                             </div>
-                          </td>
-                          <td className="py-4 text-right">
-                            <div className="space-y-1">
-                              <div className="font-bold text-lg text-[var(--coral-red)]">
-                                {payload.total?.toFixed(2) || "0.00"}€
-                              </div>
-                              {payload.qty &&
-                                payload.unitPrice &&
-                                payload.qty > 1 && (
-                                  <div className="text-xs text-[var(--text-tertiary)]">
-                                    {payload.unitPrice.toFixed(2)}€/Stück
-                                  </div>
-                                )}
+                          </th>
+                          <th
+                            className="pb-3 pt-2 px-2 text-xs font-semibold text-[var(--text-secondary)]"
+                            style={{ width: "12%" }}
+                          >
+                            Hersteller
+                          </th>
+                          <th
+                            className="pb-3 pt-2 px-2 text-xs font-semibold text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors"
+                            style={{ width: "12%" }}
+                            onClick={() =>
+                              handleSort(
+                                "expense",
+                                "category",
+                                expenseSort,
+                                setExpenseSort
+                              )
+                            }
+                          >
+                            <div className="flex items-center gap-1">
+                              Kategorie
+                              {expenseSort.key === "category" && (
+                                <svg
+                                  className={`w-3 h-3 transition-transform ${
+                                    expenseSort.order === "desc"
+                                      ? "rotate-180"
+                                      : ""
+                                  }`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 15l7-7 7 7"
+                                  />
+                                </svg>
+                              )}
                             </div>
-                          </td>
-                          <td className="py-4 text-sm text-[var(--text-tertiary)]">
-                            {formatDateTime(entry.createdAt)}
-                          </td>
-                          <td className="py-4">
-                            <button
-                              onClick={() => handleDelete(entry)}
-                              className="p-2 hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg transition-colors"
-                              title="Eintrag löschen"
-                            >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
-                            </button>
-                          </td>
+                          </th>
+                          <th
+                            className="pb-3 pt-2 px-2 text-xs font-semibold text-[var(--text-secondary)]"
+                            style={{ width: "10%" }}
+                          >
+                            Art
+                          </th>
+                          <th
+                            className="pb-3 pt-2 px-2 text-xs font-semibold text-[var(--text-secondary)]"
+                            style={{ width: "8%" }}
+                          >
+                            Zusatz
+                          </th>
+                          <th
+                            className="pb-3 pt-2 px-2 text-xs font-semibold text-[var(--text-secondary)]"
+                            style={{ width: "6%" }}
+                          >
+                            Wohn.
+                          </th>
+                          <th
+                            className="pb-3 pt-2 px-2 text-xs font-semibold text-[var(--text-secondary)] text-right"
+                            style={{ width: "5%" }}
+                          >
+                            Menge
+                          </th>
+                          <th
+                            className="pb-3 pt-2 px-2 text-xs font-semibold text-[var(--text-secondary)] text-right"
+                            style={{ width: "9%" }}
+                          >
+                            Preis/St.
+                          </th>
+                          <th
+                            className="pb-3 pt-2 px-2 text-xs font-semibold text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors text-right"
+                            style={{ width: "10%" }}
+                            onClick={() =>
+                              handleSort(
+                                "expense",
+                                "value",
+                                expenseSort,
+                                setExpenseSort
+                              )
+                            }
+                          >
+                            <div className="flex items-center justify-end gap-1">
+                              Summe
+                              {expenseSort.key === "value" && (
+                                <svg
+                                  className={`w-3 h-3 transition-transform ${
+                                    expenseSort.order === "desc"
+                                      ? "rotate-180"
+                                      : ""
+                                  }`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 15l7-7 7 7"
+                                  />
+                                </svg>
+                              )}
+                            </div>
+                          </th>
+                          <th
+                            className="pb-3 pt-2 px-2 text-xs font-semibold text-[var(--text-secondary)] text-center"
+                            style={{ width: "2%" }}
+                          ></th>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </Card>
+                      </thead>
+                      <tbody>
+                        {displayedExpenseEntries.map((entry, index) => {
+                          const payload = entry.payload as ExpensePayload;
+                          return (
+                            <tr
+                              key={entry.id}
+                              className={`border-b border-[var(--border-subtle)] hover:bg-[var(--bg-secondary)] transition-colors animate-fade-in`}
+                              style={{ animationDelay: `${index * 50}ms` }}
+                            >
+                              <td className="py-4 px-2 text-xs font-medium text-[var(--text-primary)]">
+                                {formatDate(entry.date)}
+                              </td>
+                              <td className="py-4 px-2">
+                                <div
+                                  className="text-xs font-medium text-[var(--text-primary)] break-words leading-tight"
+                                  title={
+                                    payload.position || "Unbekannte Position"
+                                  }
+                                >
+                                  {payload.position || "Unbekannte Position"}
+                                </div>
+                              </td>
+                              <td className="py-4 px-2">
+                                <div
+                                  className="text-xs text-[var(--text-secondary)] break-words leading-tight"
+                                  title={payload.manufacturer || "-"}
+                                >
+                                  {payload.manufacturer || "-"}
+                                </div>
+                              </td>
+                              <td className="py-4 px-2">
+                                <span className="text-xs text-[var(--text-secondary)] break-words leading-tight">
+                                  {payload.category || "-"}
+                                </span>
+                              </td>
+                              <td
+                                className="py-4 px-2 text-xs text-[var(--text-secondary)] break-words leading-tight"
+                                title={payload.type || "-"}
+                              >
+                                {payload.type || "-"}
+                              </td>
+                              <td
+                                className="py-4 px-2 text-xs text-[var(--text-secondary)] break-words leading-tight"
+                                title={payload.extra || "-"}
+                              >
+                                {payload.extra || "-"}
+                              </td>
+                              <td
+                                className="py-4 px-2 text-xs text-[var(--text-secondary)]"
+                                title={payload.apartment || "-"}
+                              >
+                                {payload.apartment || "-"}
+                              </td>
+                              <td className="py-4 px-2 text-right text-xs font-medium">
+                                {formatNumber(payload.qty || 1)}
+                              </td>
+                              <td className="py-4 px-2 text-right text-xs font-medium">
+                                {formatCurrency(payload.unitPrice || 0)}
+                              </td>
+                              <td className="py-4 px-2 text-right">
+                                <span className="font-bold text-sm text-[var(--coral-red)]">
+                                  {formatCurrency(payload.total || 0)}
+                                </span>
+                              </td>
+                              <td className="py-4 px-2 text-center">
+                                <button
+                                  onClick={() => handleDelete(entry)}
+                                  className="p-1 hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 rounded transition-colors"
+                                  title="Eintrag löschen"
+                                >
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                  </svg>
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Lazy Loading Button for Expense Entries */}
+                  {displayedExpenseEntries.length < expenseEntries.length && (
+                    <div className="text-center pt-6">
+                      <button
+                        onClick={() =>
+                          setExpenseEntriesLimit((prev) => prev + 20)
+                        }
+                        className="btn btn-secondary"
+                      >
+                        Weitere{" "}
+                        {Math.min(
+                          20,
+                          expenseEntries.length - displayedExpenseEntries.length
+                        )}{" "}
+                        Einträge laden
+                        <svg
+                          className="w-4 h-4 ml-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Card>
+          </div>
         )}
 
         {/* Summary Stats */}
@@ -1140,12 +1224,12 @@ export default function EntriesPage() {
               </div>
               <div className="text-left">
                 <div className="text-2xl font-bold text-[var(--text-primary)]">
-                  {workEntries
-                    .reduce(
+                  {formatNumber(
+                    workEntries.reduce(
                       (sum, e) => sum + ((e.payload as WorkPayload).hours || 0),
                       0
                     )
-                    .toFixed(1)}
+                  )}
                   h
                 </div>
                 <div className="text-sm text-[var(--text-secondary)]">
@@ -1174,13 +1258,13 @@ export default function EntriesPage() {
               </div>
               <div className="text-left">
                 <div className="text-2xl font-bold text-[var(--text-primary)]">
-                  {expenseEntries
-                    .reduce(
+                  {formatNumber(
+                    expenseEntries.reduce(
                       (sum, e) =>
                         sum + ((e.payload as ExpensePayload).total || 0),
                       0
                     )
-                    .toFixed(0)}
+                  )}
                   €
                 </div>
                 <div className="text-sm text-[var(--text-secondary)]">
@@ -1209,7 +1293,7 @@ export default function EntriesPage() {
               </div>
               <div className="text-left">
                 <div className="text-2xl font-bold text-[var(--text-primary)]">
-                  {workEntries.length + expenseEntries.length}
+                  {formatNumber(workEntries.length + expenseEntries.length)}
                 </div>
                 <div className="text-sm text-[var(--text-secondary)]">
                   Gesamte Einträge
@@ -1238,14 +1322,14 @@ export default function EntriesPage() {
               <div className="text-left">
                 <div className="text-2xl font-bold text-[var(--text-primary)]">
                   {expenseEntries.length > 0
-                    ? (
+                    ? formatNumber(
                         expenseEntries.reduce(
                           (sum, e) =>
                             sum + ((e.payload as ExpensePayload).total || 0),
                           0
                         ) / expenseEntries.length
-                      ).toFixed(0)
-                    : 0}
+                      )
+                    : "0"}
                   €
                 </div>
                 <div className="text-sm text-[var(--text-secondary)]">
