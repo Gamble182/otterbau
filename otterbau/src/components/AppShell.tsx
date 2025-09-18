@@ -8,7 +8,7 @@ const NAV_ITEMS = [
     label: "Dashboard",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="w-6 h-6"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -17,7 +17,13 @@ const NAV_ITEMS = [
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={2}
-          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+          d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
+        />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M8 5v4M16 5v4"
         />
       </svg>
     ),
@@ -27,7 +33,7 @@ const NAV_ITEMS = [
     label: "Einträge",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="w-6 h-6"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -36,7 +42,7 @@ const NAV_ITEMS = [
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={2}
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
         />
       </svg>
     ),
@@ -46,7 +52,7 @@ const NAV_ITEMS = [
     label: "Einstellungen",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="w-6 h-6"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -72,82 +78,86 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="min-h-screen bg-primary">
-      {/* Clean Header */}
-      <header className="header-main sticky top-0 z-40">
-        <div className="mx-auto max-w-7xl h-16 px-4 flex items-center justify-between">
-          {/* Brand */}
-          <div className="flex items-center gap-3">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{
-                background: "linear-gradient(135deg, #E6B429 0%, #E85A2B 100%)",
-                color: "#1A1A1A",
-              }}
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2.5}
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                />
-              </svg>
+    <div className="min-h-screen bg-[var(--bg-primary)]">
+      {/* iOS-inspired Header with Glass Effect */}
+      <header className="header sticky top-0 z-50">
+        <div className="mx-auto max-w-6xl h-20 px-6 flex items-center justify-between">
+          {/* Brand with Sony-inspired Icon */}
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              {/* Sony Cassette-inspired Icon */}
+              <div className="w-12 h-12 rounded-2xl bg-gradient-accent flex items-center justify-center shadow-md">
+                <svg
+                  className="w-7 h-7 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.5}
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2-2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                  />
+                </svg>
+              </div>
+              {/* Subtle accent dot */}
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--coral-red)] rounded-full border-2 border-[var(--bg-primary)]"></div>
             </div>
+
             <div>
               <div className="header-brand">Otterbau</div>
-              <div className="text-xs text-secondary -mt-1">Tracking</div>
+              <div className="header-subtitle">Tracking</div>
             </div>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-2">
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className={`nav-item ${pathname === item.href ? "active" : ""}`}
               >
-                {item.icon}
+                <div className="w-5 h-5">{item.icon}</div>
                 {item.label}
               </Link>
             ))}
           </nav>
 
-          {/* Status */}
+          {/* Status Indicator */}
           <div className="hidden lg:flex items-center gap-4">
             <div className="status-indicator status-online">
               <div className="status-led status-led-active" />
-              Online
+              <span>Offline</span>
             </div>
-            <div className="text-sm text-secondary">
-              {new Date().toLocaleDateString("de-DE")}
+            <div className="text-sm font-medium text-[var(--text-secondary)]">
+              {new Date().toLocaleDateString("de-DE", {
+                weekday: "short",
+                day: "2-digit",
+                month: "short",
+              })}
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 py-8 pb-24 md:pb-8">
+      <main className="mx-auto max-w-6xl px-6 py-8 pb-32 md:pb-8">
         <div className="animate-fade-in">{children}</div>
       </main>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="nav-mobile md:hidden fixed bottom-0 inset-x-0 z-40 safe-area-pb">
-        <div className="grid grid-cols-3 py-2">
+      {/* iOS-style Mobile Bottom Navigation */}
+      <nav className="nav-mobile md:hidden fixed bottom-0 inset-x-0 z-50 safe-area-pb">
+        <div className="grid grid-cols-3 h-20">
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={`nav-item ${pathname === item.href ? "active" : ""}`}
             >
-              {item.icon}
-              <span>{item.label}</span>
+              <div className="w-6 h-6">{item.icon}</div>
+              <span className="text-xs font-medium">{item.label}</span>
             </Link>
           ))}
         </div>

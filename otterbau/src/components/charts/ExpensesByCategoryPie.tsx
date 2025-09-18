@@ -9,30 +9,39 @@ type Props = {
   topN?: number;
 };
 
-// Moderne Farbpalette
+// Sony Dynamicron T-120 inspired color palette
 const PIE_COLORS = [
-  "#3B82F6", // blue
-  "#10B981", // emerald
-  "#F59E0B", // amber
-  "#EF4444", // red
-  "#8B5CF6", // purple
-  "#EC4899", // pink
-  "#6366F1", // indigo
-  "#14B8A6", // teal
+  "var(--accent-primary)", // Warm Yellow
+  "var(--vibrant-orange)", // Vibrant Orange
+  "var(--coral-red)", // Coral Red
+  "var(--deep-red)", // Deep Red
+  "var(--burgundy)", // Burgundy
+  "var(--dark-burgundy)", // Dark Burgundy
+  "var(--accent-secondary)", // Orange blend
+  "var(--charcoal)", // Charcoal
 ];
 
-// Custom Tooltip Component
+// Custom Tooltip Component with Sony styling
 function CustomTooltip({ active, payload }: any) {
   if (active && payload && payload.length) {
     const data = payload[0];
     return (
-      <div className="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
-        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-          {data.name}
-        </p>
-        <p className="text-sm font-bold" style={{ color: data.payload.fill }}>
-          {data.value.toFixed(2)}€ ({data.payload.percentage}%)
-        </p>
+      <div className="bg-[var(--bg-surface-elevated)] backdrop-blur-xl p-4 rounded-xl shadow-xl border border-[var(--border-emphasis)]">
+        <div className="flex items-center gap-3 mb-2">
+          <div
+            className="w-4 h-4 rounded-full shadow-sm"
+            style={{ backgroundColor: data.payload.fill }}
+          />
+          <span className="text-sm font-semibold text-[var(--text-primary)]">
+            {data.name}
+          </span>
+        </div>
+        <div className="text-lg font-bold" style={{ color: data.payload.fill }}>
+          {data.value.toFixed(2)}€
+        </div>
+        <div className="text-xs text-[var(--text-secondary)] mt-1">
+          {data.payload.percentage}% der Gesamtausgaben
+        </div>
       </div>
     );
   }
@@ -90,10 +99,10 @@ export default function ExpensesByCategoryPie({ from, to, topN = 8 }: Props) {
   if (!data.length) {
     return (
       <div className="h-full flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mb-4">
+        <div className="text-center animate-fade-in">
+          <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-[var(--deep-red)]/10 to-[var(--burgundy)]/10 border border-[var(--deep-red)]/20 flex items-center justify-center mb-4">
             <svg
-              className="w-8 h-8 text-slate-400"
+              className="w-10 h-10 text-[var(--deep-red)]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -106,10 +115,10 @@ export default function ExpensesByCategoryPie({ from, to, topN = 8 }: Props) {
               />
             </svg>
           </div>
-          <p className="text-slate-500 dark:text-slate-400 font-medium">
+          <p className="text-[var(--text-secondary)] font-medium text-lg mb-1">
             Keine Ausgabendaten vorhanden
           </p>
-          <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+          <p className="text-[var(--text-tertiary)] text-sm">
             Erfasse deine ersten Ausgaben!
           </p>
         </div>
@@ -131,15 +140,20 @@ export default function ExpensesByCategoryPie({ from, to, topN = 8 }: Props) {
               nameKey="name"
               cx="50%"
               cy="50%"
-              innerRadius={50}
-              outerRadius={90}
-              paddingAngle={2}
-              stroke="none"
+              innerRadius={55}
+              outerRadius={95}
+              paddingAngle={3}
+              stroke="var(--bg-primary)"
+              strokeWidth={2}
             >
               {data.map((_, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={PIE_COLORS[index % PIE_COLORS.length]}
+                  style={{
+                    filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))",
+                    transition: "all 0.2s ease",
+                  }}
                 />
               ))}
             </Pie>
@@ -148,31 +162,41 @@ export default function ExpensesByCategoryPie({ from, to, topN = 8 }: Props) {
         </ResponsiveContainer>
       </div>
 
-      {/* Custom Legend */}
-      <div className="grid grid-cols-2 gap-2 text-xs mt-4">
+      {/* Custom Legend with Sony styling */}
+      <div className="grid grid-cols-2 gap-3 text-xs mt-4">
         {data.map((entry, index) => (
-          <div key={entry.name} className="flex items-center gap-2 min-w-0">
+          <div
+            key={entry.name}
+            className="flex items-center gap-3 min-w-0 p-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors"
+          >
             <div
-              className="w-3 h-3 rounded-sm flex-shrink-0"
+              className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm border border-white/20"
               style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
             />
-            <span className="text-slate-600 dark:text-slate-400 truncate flex-1">
-              {entry.name}
-            </span>
-            <span className="text-slate-900 dark:text-white font-semibold">
-              {entry.value.toFixed(0)}€
-            </span>
+            <div className="flex-1 min-w-0">
+              <div className="text-[var(--text-secondary)] truncate font-medium">
+                {entry.name}
+              </div>
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-[var(--text-primary)] font-bold">
+                  {entry.value.toFixed(0)}€
+                </span>
+                <span className="text-[var(--text-tertiary)] text-xs">
+                  {entry.percentage}%
+                </span>
+              </div>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Total */}
-      <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700">
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Gesamt
+      {/* Total with Sony gradient accent */}
+      <div className="mt-4 pt-4 border-t border-[var(--border-subtle)]">
+        <div className="flex justify-between items-center p-3 rounded-xl bg-gradient-to-r from-[var(--accent-primary)]/5 to-[var(--accent-secondary)]/5 border border-[var(--accent-primary)]/10">
+          <span className="text-base font-semibold text-[var(--text-primary)]">
+            Gesamtausgaben
           </span>
-          <span className="text-lg font-bold text-slate-900 dark:text-white">
+          <span className="text-2xl font-bold text-gradient">
             {total.toFixed(2)}€
           </span>
         </div>

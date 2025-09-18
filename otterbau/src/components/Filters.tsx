@@ -25,7 +25,7 @@ export default function Filters({ onChange }: FiltersProps) {
 
   const entries = useEntries((s) => s.items);
 
-  // Automatisch verfügbare Optionen extrahieren
+  // Extract available options automatically
   const { availablePersons, availableCategories } = useMemo(() => {
     const persons = new Set<string>();
     const categories = new Set<string>();
@@ -48,7 +48,7 @@ export default function Filters({ onChange }: FiltersProps) {
     };
   }, [entries]);
 
-  // Filter-State aktualisieren
+  // Update filter state
   useMemo(() => {
     onChange({
       type,
@@ -91,62 +91,66 @@ export default function Filters({ onChange }: FiltersProps) {
   };
 
   return (
-    <Card>
-      <div className="space-y-4">
-        {/* Header mit Quick-Filters */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <svg
-              className="w-5 h-5 text-slate-600 dark:text-slate-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-              />
-            </svg>
-            <h3 className="font-semibold text-slate-900 dark:text-white">
-              Filter
-            </h3>
+    <Card variant="glass">
+      <div className="space-y-6">
+        {/* Header with Quick-Filters */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-accent flex items-center justify-center">
+              <svg
+                className="w-5 h-5 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+                Filter
+              </h3>
+              <p className="text-sm text-[var(--text-secondary)]">
+                Einträge eingrenzen
+              </p>
+            </div>
             {hasActiveFilters && (
-              <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded-full">
+              <div className="px-3 py-1 bg-gradient-accent text-white text-xs font-semibold rounded-full animate-scale-in">
                 Aktiv
-              </span>
+              </div>
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Quick Filter Buttons */}
-            <button
-              onClick={() => setQuickFilter("today")}
-              className="px-3 py-1.5 text-xs font-medium bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg transition-colors"
-            >
-              Heute
-            </button>
-            <button
-              onClick={() => setQuickFilter("week")}
-              className="px-3 py-1.5 text-xs font-medium bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg transition-colors"
-            >
-              Woche
-            </button>
-            <button
-              onClick={() => setQuickFilter("month")}
-              className="px-3 py-1.5 text-xs font-medium bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg transition-colors"
-            >
-              Monat
-            </button>
+          <div className="flex items-center gap-3">
+            {/* Quick Filter Buttons with Sony styling */}
+            {[
+              { label: "Heute", filter: "today" as const, icon: "📅" },
+              { label: "Woche", filter: "week" as const, icon: "🗓️" },
+              { label: "Monat", filter: "month" as const, icon: "📊" },
+            ].map((item, index) => (
+              <button
+                key={item.filter}
+                onClick={() => setQuickFilter(item.filter)}
+                className="filter-pill animate-scale-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <span className="text-xs">{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            ))}
 
             {/* Expand/Collapse Button */}
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              className="btn btn-ghost btn-sm"
             >
               <svg
-                className={`w-4 h-4 text-slate-600 dark:text-slate-400 transition-transform ${
+                className={`w-4 h-4 transition-transform duration-200 ${
                   isExpanded ? "rotate-180" : ""
                 }`}
                 fill="none"
@@ -164,63 +168,57 @@ export default function Filters({ onChange }: FiltersProps) {
           </div>
         </div>
 
-        {/* Erweiterte Filter */}
+        {/* Expanded Filters */}
         {isExpanded && (
-          <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
-            {/* Typ Filter */}
+          <div className="space-y-6 animate-slide-up">
+            {/* Type & Category Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  Typ
-                </label>
+                <label className="form-label">Typ</label>
                 <select
                   value={type}
                   onChange={(e) => setType(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+                  className="form-select"
                 >
                   <option value="">Alle Typen</option>
-                  <option value="work">🕒 Arbeitszeit</option>
+                  <option value="work">⏰ Arbeitszeit</option>
                   <option value="expense">💰 Ausgaben</option>
                   <option value="projectCost">🏗️ Projektkosten</option>
                 </select>
               </div>
 
-              {/* Person Filter (nur bei Arbeitszeit) */}
+              {/* Person Filter */}
               {availablePersons.length > 0 && (
                 <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    Person
-                  </label>
+                  <label className="form-label">Person</label>
                   <select
                     value={person}
                     onChange={(e) => setPerson(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+                    className="form-select"
                   >
                     <option value="">Alle Personen</option>
                     {availablePersons.map((p) => (
                       <option key={p} value={p}>
-                        {p}
+                        👤 {p}
                       </option>
                     ))}
                   </select>
                 </div>
               )}
 
-              {/* Kategorie Filter */}
+              {/* Category Filter */}
               {availableCategories.length > 0 && (
                 <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    Kategorie
-                  </label>
+                  <label className="form-label">Kategorie</label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+                    className="form-select"
                   >
                     <option value="">Alle Kategorien</option>
                     {availableCategories.map((cat) => (
                       <option key={cat} value={cat}>
-                        {cat}
+                        🏷️ {cat}
                       </option>
                     ))}
                   </select>
@@ -228,29 +226,25 @@ export default function Filters({ onChange }: FiltersProps) {
               )}
             </div>
 
-            {/* Datums-Filter */}
+            {/* Date Range Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  Von Datum
-                </label>
+                <label className="form-label">Von Datum</label>
                 <input
                   type="date"
                   value={from}
                   onChange={(e) => setFrom(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+                  className="form-input"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  Bis Datum
-                </label>
+                <label className="form-label">Bis Datum</label>
                 <input
                   type="date"
                   value={to}
                   onChange={(e) => setTo(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+                  className="form-input"
                 />
               </div>
             </div>
@@ -260,7 +254,7 @@ export default function Filters({ onChange }: FiltersProps) {
               <div className="flex justify-end">
                 <button
                   onClick={clearFilters}
-                  className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors"
+                  className="btn btn-secondary animate-scale-in"
                 >
                   <svg
                     className="w-4 h-4"
@@ -282,24 +276,24 @@ export default function Filters({ onChange }: FiltersProps) {
           </div>
         )}
 
-        {/* Aktive Filter Anzeige */}
+        {/* Active Filters Display */}
         {hasActiveFilters && (
-          <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+          <div className="pt-4 border-t border-[var(--border-subtle)] animate-fade-in">
             <div className="flex flex-wrap gap-2">
-              <span className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+              <span className="text-sm font-medium text-[var(--text-secondary)] mr-2">
                 Aktive Filter:
               </span>
 
               {type && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded-full">
+                <span className="filter-pill active">
                   {type === "work"
-                    ? "🕒 Arbeitszeit"
+                    ? "⏰ Arbeitszeit"
                     : type === "expense"
                     ? "💰 Ausgaben"
                     : "🏗️ Projektkosten"}
                   <button
                     onClick={() => setType("")}
-                    className="ml-1 hover:text-blue-900"
+                    className="ml-2 hover:text-white"
                   >
                     ×
                   </button>
@@ -307,11 +301,11 @@ export default function Filters({ onChange }: FiltersProps) {
               )}
 
               {person && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs font-semibold rounded-full">
+                <span className="filter-pill active">
                   👤 {person}
                   <button
                     onClick={() => setPerson("")}
-                    className="ml-1 hover:text-emerald-900"
+                    className="ml-2 hover:text-white"
                   >
                     ×
                   </button>
@@ -319,11 +313,11 @@ export default function Filters({ onChange }: FiltersProps) {
               )}
 
               {category && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-semibold rounded-full">
+                <span className="filter-pill active">
                   🏷️ {category}
                   <button
                     onClick={() => setCategory("")}
-                    className="ml-1 hover:text-purple-900"
+                    className="ml-2 hover:text-white"
                   >
                     ×
                   </button>
@@ -331,14 +325,14 @@ export default function Filters({ onChange }: FiltersProps) {
               )}
 
               {(from || to) && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-semibold rounded-full">
+                <span className="filter-pill active">
                   📅 {from || "..."} - {to || "..."}
                   <button
                     onClick={() => {
                       setFrom("");
                       setTo("");
                     }}
-                    className="ml-1 hover:text-amber-900"
+                    className="ml-2 hover:text-white"
                   >
                     ×
                   </button>
@@ -352,26 +346,26 @@ export default function Filters({ onChange }: FiltersProps) {
   );
 }
 
-// Hilfsselector: gefilterte Items aus Store (clientseitig)
+// Helper selector: filtered items from store (client-side)
 export function useFilteredEntries(f: FilterState) {
   const items = useEntries((s) => s.items);
   return useMemo(() => {
     return items
       .filter((e) => {
-        // Typ Filter
+        // Type Filter
         if (f.type && e.type !== f.type) return false;
 
-        // Datums Filter
+        // Date Filter
         if (f.from && e.date < f.from) return false;
         if (f.to && e.date > f.to) return false;
 
-        // Person Filter (nur für work entries)
+        // Person Filter (only for work entries)
         if (f.person && e.type === "work") {
           const payload = e.payload as any;
           if (payload.personName !== f.person) return false;
         }
 
-        // Kategorie Filter
+        // Category Filter
         if (f.category) {
           const payload = e.payload as any;
           if (payload.category !== f.category) return false;
