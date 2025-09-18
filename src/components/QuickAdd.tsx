@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import React from "react";
 import Modal from "./Modal";
 import { useEntries } from "@/store/useEntries";
@@ -391,9 +391,10 @@ function WorkForm({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-// Expense Form Component
+// Expense Form Component - Verbesserte Version
 function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
   const add = useEntries((s) => s.add);
+  const entries = useEntries((s) => s.items);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -407,8 +408,29 @@ function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
     qty: "1",
     price: "",
     date: isoDate(),
-    note: "",
   });
+
+  // Autofill-Optionen aus bestehenden Einträgen generieren
+  const { manufacturerOptions, typeOptions, categoryOptions } = useMemo(() => {
+    const manufacturers = new Set<string>();
+    const types = new Set<string>();
+    const categories = new Set<string>();
+
+    entries.forEach((entry) => {
+      if (entry.type === "expense") {
+        const payload = entry.payload as ExpensePayload;
+        if (payload.manufacturer) manufacturers.add(payload.manufacturer);
+        if (payload.type) types.add(payload.type);
+        if (payload.category) categories.add(payload.category);
+      }
+    });
+
+    return {
+      manufacturerOptions: Array.from(manufacturers).sort(),
+      typeOptions: Array.from(types).sort(),
+      categoryOptions: Array.from(categories).sort(),
+    };
+  }, [entries]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -442,13 +464,12 @@ function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
           category: formData.category,
           type: formData.type.trim() || undefined,
           extra: formData.extra.trim() || undefined,
-          apartment: formData.apartment.trim() || undefined,
+          apartment: formData.apartment || undefined,
           qty,
           unitPrice,
           total: qty * unitPrice,
           currency: "EUR",
           buyer: formData.buyer,
-          note: formData.note.trim() || undefined,
         } as ExpensePayload,
         createdAt: isoNow(),
         updatedAt: isoNow(),
@@ -500,6 +521,7 @@ function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
             </span>
           </label>
           <input
+            list="manufacturer-options"
             value={formData.manufacturer}
             onChange={(e) =>
               setFormData((prev) => ({ ...prev, manufacturer: e.target.value }))
@@ -507,6 +529,11 @@ function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
             className="form-input"
             placeholder="z.B. Bosch, Makita, Festool"
           />
+          <datalist id="manufacturer-options">
+            {manufacturerOptions.map((option) => (
+              <option key={option} value={option} />
+            ))}
+          </datalist>
         </div>
       </div>
 
@@ -526,15 +553,40 @@ function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
             }
             className="form-select"
           >
-            <option>🔧 Werkzeug</option>
-            <option>🧱 Material</option>
-            <option>🏗️ Baustelle</option>
-            <option>⚡ Elektrik</option>
-            <option>🚿 Sanitär</option>
-            <option>🎨 Farbe & Lack</option>
-            <option>🚪 Türen & Fenster</option>
-            <option>🔩 Schrauben & Befestigung</option>
-            <option>📦 Sonstiges</option>
+            {/* Benutzte Kategorien zuerst */}
+            {categoryOptions.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+            {/* Standard-Kategorien falls noch nicht verwendet */}
+            {!categoryOptions.includes("🔧 Werkzeug") && (
+              <option>🔧 Werkzeug</option>
+            )}
+            {!categoryOptions.includes("🧱 Material") && (
+              <option>🧱 Material</option>
+            )}
+            {!categoryOptions.includes("🏗️ Baustelle") && (
+              <option>🏗️ Baustelle</option>
+            )}
+            {!categoryOptions.includes("⚡ Elektrik") && (
+              <option>⚡ Elektrik</option>
+            )}
+            {!categoryOptions.includes("🚿 Sanitär") && (
+              <option>🚿 Sanitär</option>
+            )}
+            {!categoryOptions.includes("🎨 Farbe & Lack") && (
+              <option>🎨 Farbe & Lack</option>
+            )}
+            {!categoryOptions.includes("🚪 Türen & Fenster") && (
+              <option>🚪 Türen & Fenster</option>
+            )}
+            {!categoryOptions.includes("🔩 Schrauben & Befestigung") && (
+              <option>🔩 Schrauben & Befestigung</option>
+            )}
+            {!categoryOptions.includes("📦 Sonstiges") && (
+              <option>📦 Sonstiges</option>
+            )}
           </select>
         </div>
 
@@ -549,6 +601,7 @@ function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
             </span>
           </label>
           <input
+            list="type-options"
             value={formData.type}
             onChange={(e) =>
               setFormData((prev) => ({ ...prev, type: e.target.value }))
@@ -556,6 +609,11 @@ function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
             className="form-input"
             placeholder="z.B. Elektrowerkzeug, Handwerkzeug"
           />
+          <datalist id="type-options">
+            {typeOptions.map((option) => (
+              <option key={option} value={option} />
+            ))}
+          </datalist>
         </div>
       </div>
 
@@ -599,13 +657,8 @@ function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
             className="form-select"
           >
             <option value="">Wohnung wählen...</option>
-            <option>🏠 EG - Erdgeschoss</option>
-            <option>🏠 OG - Obergeschoss</option>
-            <option>🏠 DG - Dachgeschoss</option>
-            <option>🏠 KG - Keller</option>
-            <option>🌿 Außenbereich</option>
-            <option>🚗 Garage</option>
-            <option>🏗️ Allgemein</option>
+            <option value="LY">LY</option>
+            <option value="EW">EW</option>
           </select>
         </div>
       </div>
@@ -637,15 +690,19 @@ function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
               Käufer
             </span>
           </label>
-          <input
+          <select
             value={formData.buyer}
             onChange={(e) =>
               setFormData((prev) => ({ ...prev, buyer: e.target.value }))
             }
-            className="form-input"
-            placeholder="Name des Käufers"
+            className="form-select"
             required
-          />
+          >
+            <option value="Yannik">Yannik</option>
+            <option value="Lisa">Lisa</option>
+            <option value="Gemeinsam">Gemeinsam</option>
+            <option value="Thomas">Thomas</option>
+          </select>
         </div>
       </div>
 
@@ -702,28 +759,6 @@ function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
             {total.toFixed(2)}
           </div>
         </div>
-      </div>
-
-      {/* Notiz */}
-      <div className="space-y-2">
-        <label className="form-label">
-          <span className="flex items-center gap-2">
-            <span className="text-lg">📝</span>
-            Notiz{" "}
-            <span className="text-[var(--text-tertiary)] text-xs font-normal">
-              (optional)
-            </span>
-          </span>
-        </label>
-        <textarea
-          rows={2}
-          value={formData.note}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, note: e.target.value }))
-          }
-          className="form-textarea"
-          placeholder="Zusätzliche Informationen..."
-        />
       </div>
 
       {/* Actions */}
