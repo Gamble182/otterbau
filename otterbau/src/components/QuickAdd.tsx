@@ -11,10 +11,10 @@ export default function QuickAdd() {
 
   return (
     <>
-      {/* Desktop Buttons */}
+      {/* Desktop Buttons - Sony Style */}
       <div className="hidden sm:flex gap-3">
         <button
-          className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition-all hover:scale-105 active:scale-95"
+          className="btn btn-primary animate-scale-in"
           onClick={() => {
             setType("work");
             setOpen(true);
@@ -29,7 +29,7 @@ export default function QuickAdd() {
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2}
+              strokeWidth={2.5}
               d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
@@ -37,7 +37,8 @@ export default function QuickAdd() {
         </button>
 
         <button
-          className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-medium transition-all hover:scale-105 active:scale-95"
+          className="btn btn-success animate-scale-in"
+          style={{ animationDelay: "100ms" }}
           onClick={() => {
             setType("expense");
             setOpen(true);
@@ -52,7 +53,7 @@ export default function QuickAdd() {
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2}
+              strokeWidth={2.5}
               d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
             />
           </svg>
@@ -60,13 +61,16 @@ export default function QuickAdd() {
         </button>
       </div>
 
-      {/* Mobile FAB */}
+      {/* Mobile FAB - Sony Style */}
       <button
         onClick={() => {
           setType("work");
           setOpen(true);
         }}
-        className="sm:hidden fixed bottom-20 right-4 w-14 h-14 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl active:scale-90 transition-all z-40 flex items-center justify-center"
+        className="sm:hidden fixed bottom-20 right-4 w-14 h-14 bg-gradient-accent text-white rounded-full shadow-xl hover:shadow-2xl active:scale-90 transition-all z-40 flex items-center justify-center backdrop-blur-sm animate-scale-in"
+        style={{
+          filter: "drop-shadow(0 4px 16px rgba(253, 184, 99, 0.3))",
+        }}
       >
         <svg
           className="w-6 h-6"
@@ -77,13 +81,13 @@ export default function QuickAdd() {
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
-            strokeWidth={2}
+            strokeWidth={2.5}
             d="M12 6v6m0 0v6m0-6h6m-6 0H6"
           />
         </svg>
       </button>
 
-      {/* Dialog */}
+      {/* Dialog - Updated für Sony Design */}
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
@@ -146,7 +150,7 @@ function WorkForm({ onDone }: { onDone: () => void }) {
 
   return (
     <form
-      className="space-y-6"
+      className="space-y-6 animate-fade-in"
       onSubmit={(e) => {
         e.preventDefault();
         void submit();
@@ -155,13 +159,13 @@ function WorkForm({ onDone }: { onDone: () => void }) {
       {/* Person & Date */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Person
+          <label className="form-label">
+            <span className="flex items-center gap-2">👤 Person</span>
           </label>
           <select
             value={personId}
             onChange={(e) => setPersonId(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className="form-select"
           >
             {persons.map((p) => (
               <option key={p.id} value={p.id}>
@@ -172,14 +176,14 @@ function WorkForm({ onDone }: { onDone: () => void }) {
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Datum
+          <label className="form-label">
+            <span className="flex items-center gap-2">📅 Datum</span>
           </label>
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className="form-input"
           />
         </div>
       </div>
@@ -187,8 +191,8 @@ function WorkForm({ onDone }: { onDone: () => void }) {
       {/* Hours & Project */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Stunden
+          <label className="form-label">
+            <span className="flex items-center gap-2">⏰ Stunden</span>
           </label>
           <input
             type="number"
@@ -196,19 +200,24 @@ function WorkForm({ onDone }: { onDone: () => void }) {
             min="0"
             value={hours}
             onChange={(e) => setHours(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className="form-input"
             placeholder="z.B. 2.5"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Projekt (optional)
+          <label className="form-label">
+            <span className="flex items-center gap-2">
+              🏗️ Projekt{" "}
+              <span className="text-[var(--text-tertiary)] text-xs">
+                (optional)
+              </span>
+            </span>
           </label>
           <input
             value={project}
             onChange={(e) => setProject(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className="form-input"
             placeholder="z.B. Küche, Bad, Dach"
           />
         </div>
@@ -216,57 +225,57 @@ function WorkForm({ onDone }: { onDone: () => void }) {
 
       {/* Note */}
       <div className="space-y-2">
-        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-          Notiz (optional)
+        <label className="form-label">
+          <span className="flex items-center gap-2">
+            📝 Notiz{" "}
+            <span className="text-[var(--text-tertiary)] text-xs">
+              (optional)
+            </span>
+          </span>
         </label>
         <textarea
           rows={3}
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          className="form-textarea"
           placeholder="Was wurde gemacht?"
         />
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-        <button
-          type="button"
-          onClick={onDone}
-          className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium transition-colors"
-        >
+      <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-subtle)]">
+        <button type="button" onClick={onDone} className="btn btn-ghost">
           Abbrechen
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-6 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white rounded-xl font-medium transition-all disabled:cursor-not-allowed flex items-center gap-2"
+          className={`btn btn-primary ${
+            isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
           {isSubmitting ? (
-            <>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              Speichert...
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
               <svg
-                className="w-4 h-4 animate-spin"
+                className="w-4 h-4"
                 fill="none"
+                stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  className="opacity-25"
-                />
                 <path
-                  fill="currentColor"
-                  d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  className="opacity-75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
                 />
               </svg>
-              Speichert...
-            </>
-          ) : (
-            "Speichern"
+              Speichern
+            </div>
           )}
         </button>
       </div>
@@ -325,7 +334,7 @@ function ExpenseForm({ onDone }: { onDone: () => void }) {
 
   return (
     <form
-      className="space-y-6"
+      className="space-y-6 animate-fade-in"
       onSubmit={(e) => {
         e.preventDefault();
         void submit();
@@ -334,26 +343,26 @@ function ExpenseForm({ onDone }: { onDone: () => void }) {
       {/* Position & Date */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Position *
+          <label className="form-label">
+            <span className="flex items-center gap-2">🏷️ Position *</span>
           </label>
           <input
             value={position}
             onChange={(e) => setPosition(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className="form-input"
             placeholder="z.B. Bohrmaschine, Material, Farbe"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Datum
+          <label className="form-label">
+            <span className="flex items-center gap-2">📅 Datum</span>
           </label>
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className="form-input"
           />
         </div>
       </div>
@@ -361,31 +370,31 @@ function ExpenseForm({ onDone }: { onDone: () => void }) {
       {/* Category & Buyer */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Kategorie
+          <label className="form-label">
+            <span className="flex items-center gap-2">📂 Kategorie</span>
           </label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className="form-select"
           >
-            <option>Werkzeug</option>
-            <option>Material</option>
-            <option>Baustelle</option>
-            <option>Elektrik</option>
-            <option>Sanitär</option>
-            <option>Sonstiges</option>
+            <option>🔧 Werkzeug</option>
+            <option>🧱 Material</option>
+            <option>🏗️ Baustelle</option>
+            <option>⚡ Elektrik</option>
+            <option>🚿 Sanitär</option>
+            <option>📦 Sonstiges</option>
           </select>
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Käufer
+          <label className="form-label">
+            <span className="flex items-center gap-2">👤 Käufer</span>
           </label>
           <input
             value={buyer}
             onChange={(e) => setBuyer(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className="form-input"
             placeholder="Name des Käufers"
           />
         </div>
@@ -394,8 +403,8 @@ function ExpenseForm({ onDone }: { onDone: () => void }) {
       {/* Qty, Price & Total */}
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Menge
+          <label className="form-label">
+            <span className="flex items-center gap-2">📊 Menge</span>
           </label>
           <input
             type="number"
@@ -403,13 +412,13 @@ function ExpenseForm({ onDone }: { onDone: () => void }) {
             min="0"
             value={qty}
             onChange={(e) => setQty(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className="form-input"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Einzelpreis €
+          <label className="form-label">
+            <span className="flex items-center gap-2">💰 Einzelpreis €</span>
           </label>
           <input
             type="number"
@@ -417,15 +426,15 @@ function ExpenseForm({ onDone }: { onDone: () => void }) {
             min="0"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className="form-input"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Gesamt €
+          <label className="form-label">
+            <span className="flex items-center gap-2">💸 Gesamt €</span>
           </label>
-          <div className="w-full px-3 py-2 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-700 dark:text-emerald-300 font-bold text-right">
+          <div className="w-full px-4 py-3 rounded-xl border-2 border-[var(--coral-red)]/20 bg-gradient-to-r from-[var(--coral-red)]/5 to-[var(--deep-red)]/5 font-bold text-right text-lg text-[var(--coral-red)]">
             {total.toFixed(2)}
           </div>
         </div>
@@ -433,57 +442,57 @@ function ExpenseForm({ onDone }: { onDone: () => void }) {
 
       {/* Note */}
       <div className="space-y-2">
-        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-          Notiz (optional)
+        <label className="form-label">
+          <span className="flex items-center gap-2">
+            📝 Notiz{" "}
+            <span className="text-[var(--text-tertiary)] text-xs">
+              (optional)
+            </span>
+          </span>
         </label>
         <textarea
           rows={2}
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          className="form-textarea"
           placeholder="Zusätzliche Informationen..."
         />
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-        <button
-          type="button"
-          onClick={onDone}
-          className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium transition-colors"
-        >
+      <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-subtle)]">
+        <button type="button" onClick={onDone} className="btn btn-ghost">
           Abbrechen
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white rounded-xl font-medium transition-all disabled:cursor-not-allowed flex items-center gap-2"
+          className={`btn btn-success ${
+            isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
           {isSubmitting ? (
-            <>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              Speichert...
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
               <svg
-                className="w-4 h-4 animate-spin"
+                className="w-4 h-4"
                 fill="none"
+                stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  className="opacity-25"
-                />
                 <path
-                  fill="currentColor"
-                  d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  className="opacity-75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
                 />
               </svg>
-              Speichert...
-            </>
-          ) : (
-            "Speichern"
+              Speichern
+            </div>
           )}
         </button>
       </div>

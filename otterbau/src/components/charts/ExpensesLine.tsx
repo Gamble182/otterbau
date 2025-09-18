@@ -1,14 +1,12 @@
 "use client";
 import { useMemo } from "react";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  Area,
-  AreaChart,
 } from "recharts";
 import { useEntries } from "@/store/useEntries";
 
@@ -194,23 +192,6 @@ export default function ExpensesLine() {
               strokeWidth: 3,
               fill: "var(--bg-surface-elevated)",
               filter: "drop-shadow(0 2px 8px rgba(199, 62, 29, 0.4))",
-            }}
-          />
-
-          {/* Cumulative Line */}
-          <Line
-            type="monotone"
-            dataKey="cumulative"
-            stroke="var(--accent-primary)"
-            strokeWidth={2.5}
-            strokeDasharray="6 6"
-            dot={false}
-            activeDot={{
-              r: 5,
-              stroke: "var(--accent-primary)",
-              strokeWidth: 3,
-              fill: "var(--bg-surface-elevated)",
-              filter: "drop-shadow(0 2px 6px rgba(253, 184, 99, 0.4))",
             }}
           />
         </AreaChart>

@@ -1,8 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import SearchBar from "@/components/SearchBar";
-import QuickActions from "@/components/QuickActions";
 import QuickAdd from "@/components/QuickAdd";
 import { Card, StatsCard } from "@/components/ui/Card";
 import DashboardCards from "@/components/DashboardCards";
@@ -212,27 +210,6 @@ function HomePage() {
   return (
     <AppShell>
       <div className="space-y-8">
-        {/* Welcome Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold text-[var(--text-primary)] leading-tight">
-            Willkommen zurück!
-            <span className="text-gradient ml-2">👋</span>
-          </h1>
-          <p className="text-lg text-[var(--text-secondary)] font-medium">
-            Deine Otterbau Übersicht für{" "}
-            <span className="text-[var(--accent-primary)] font-semibold">
-              {new Date().toLocaleDateString("de-DE", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-              })}
-            </span>
-          </p>
-        </div>
-
-        {/* Search */}
-        <SearchBar />
-
         {/* Tab Navigation */}
         <Card variant="glass">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -261,7 +238,6 @@ function HomePage() {
         {activeTab === "dashboard" && (
           <div className="space-y-8">
             <DashboardCards />
-            <QuickActions onAddWork={addWork} onAddExpense={addExpense} />
 
             {/* Charts Grid */}
             <div className="grid gap-6 lg:grid-cols-2">
