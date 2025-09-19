@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useMemo } from "react";
 import React from "react";
 import Modal from "./Modal";
@@ -7,137 +8,169 @@ import { usePersons } from "@/store/usePersons";
 import { isoDate, isoNow } from "@/lib/utils";
 import type { Entry, WorkPayload, ExpensePayload } from "@/lib/schemas/zod";
 
-export default function QuickAdd() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeType, setActiveType] = useState<"work" | "expense">("work");
+interface QuickAddProps {
+  onClose?: () => void;
+  initialType?: "work" | "expense";
+}
+
+export default function QuickAdd({
+  onClose,
+  initialType = "work",
+}: QuickAddProps = {}) {
+  // Wenn onClose prop vorhanden ist, verwende externen State
+  const [isOpen, setIsOpen] = useState(!!onClose);
+  const [activeType, setActiveType] = useState<"work" | "expense">(initialType);
+
+  // Für externe Nutzung: öffne automatisch
+  React.useEffect(() => {
+    if (onClose) {
+      setIsOpen(true);
+      setActiveType(initialType);
+    }
+  }, [onClose, initialType]);
 
   const openModal = (type: "work" | "expense") => {
+    if (onClose) return; // Externe Kontrolle
     setActiveType(type);
     setIsOpen(true);
   };
 
   const closeModal = () => {
     setIsOpen(false);
+    if (onClose) {
+      setTimeout(onClose, 150); // Kurze Delay für Animation
+    }
   };
+
+  // Wenn extern gesteuert und nicht offen, render nichts
+  if (onClose && !isOpen) {
+    return null;
+  }
 
   return (
     <>
-      {/* Desktop Buttons */}
-      <div className="hidden sm:flex gap-3">
-        <button
-          className="btn btn-primary animate-scale-in"
-          onClick={() => openModal("work")}
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+      {/* Desktop Buttons - nur wenn NICHT extern gesteuert */}
+      {!onClose && (
+        <div className="hidden sm:flex gap-3">
+          <button
+            className="btn btn-primary animate-scale-in"
+            onClick={() => openModal("work")}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2.5}
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          Arbeitszeit
-        </button>
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            Arbeitszeit
+          </button>
 
-        <button
-          className="btn btn-success animate-scale-in"
-          style={{ animationDelay: "100ms" }}
-          onClick={() => openModal("expense")}
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+          <button
+            className="btn btn-success animate-scale-in"
+            style={{ animationDelay: "100ms" }}
+            onClick={() => openModal("expense")}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2.5}
-              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-            />
-          </svg>
-          Ausgabe
-        </button>
-      </div>
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+              />
+            </svg>
+            Ausgabe
+          </button>
+        </div>
+      )}
 
-      {/* Mobile FAB */}
-      <div className="sm:hidden fixed bottom-20 right-4 flex flex-col gap-3 z-40">
-        {/* Hauptbutton für Arbeitszeit (häufiger genutzt) */}
-        <button
-          onClick={() => openModal("work")}
-          className="w-14 h-14 bg-gradient-accent text-white rounded-full shadow-xl hover:shadow-2xl active:scale-90 transition-all flex items-center justify-center backdrop-blur-sm animate-scale-in"
-          style={{
-            filter: "drop-shadow(0 4px 16px rgba(253, 184, 99, 0.3))",
-          }}
-          aria-label="Arbeitszeit erfassen"
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+      {/* Mobile FAB - nur wenn NICHT extern gesteuert */}
+      {!onClose && (
+        <div className="sm:hidden fixed bottom-20 right-4 flex flex-col gap-3 z-40">
+          {/* Hauptbutton für Arbeitszeit (häufiger genutzt) */}
+          <button
+            onClick={() => openModal("work")}
+            className="w-14 h-14 bg-gradient-accent text-white rounded-full shadow-xl hover:shadow-2xl active:scale-90 transition-all flex items-center justify-center backdrop-blur-sm animate-scale-in"
+            style={{
+              filter: "drop-shadow(0 4px 16px rgba(253, 184, 99, 0.3))",
+            }}
+            aria-label="Arbeitszeit erfassen"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2.5}
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        </button>
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </button>
 
-        {/* Sekundärbutton für Ausgaben */}
-        <button
-          onClick={() => openModal("expense")}
-          className="w-12 h-12 bg-gradient-warm text-white rounded-full shadow-lg hover:shadow-xl active:scale-90 transition-all flex items-center justify-center backdrop-blur-sm animate-scale-in"
-          style={{
-            animationDelay: "150ms",
-            filter: "drop-shadow(0 4px 12px rgba(232, 90, 43, 0.3))",
-          }}
-          aria-label="Ausgabe erfassen"
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+          {/* Sekundärbutton für Ausgaben */}
+          <button
+            onClick={() => openModal("expense")}
+            className="w-12 h-12 bg-gradient-warm text-white rounded-full shadow-lg hover:shadow-xl active:scale-90 transition-all flex items-center justify-center backdrop-blur-sm animate-scale-in"
+            style={{
+              animationDelay: "150ms",
+              filter: "drop-shadow(0 4px 12px rgba(232, 90, 43, 0.3))",
+            }}
+            aria-label="Ausgabe erfassen"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2.5}
-              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-            />
-          </svg>
-        </button>
-      </div>
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+              />
+            </svg>
+          </button>
+        </div>
+      )}
 
-      {/* Modal */}
-      <Modal
-        isOpen={isOpen}
-        onClose={closeModal}
-        title={
-          activeType === "work" ? "Arbeitszeit erfassen" : "Ausgabe erfassen"
-        }
-        subtitle={
-          activeType === "work"
-            ? "Neue Arbeitsstunden hinzufügen"
-            : "Neue Ausgabe dokumentieren"
-        }
-        size="lg"
-      >
-        {activeType === "work" ? (
-          <WorkForm onSuccess={closeModal} />
-        ) : (
-          <ExpenseForm onSuccess={closeModal} />
-        )}
-      </Modal>
+      {/* Modal - immer rendern wenn isOpen */}
+      {isOpen && (
+        <Modal
+          isOpen={isOpen}
+          onClose={closeModal}
+          title={
+            activeType === "work" ? "Arbeitszeit erfassen" : "Ausgabe erfassen"
+          }
+          subtitle={
+            activeType === "work"
+              ? "Neue Arbeitsstunden hinzufügen"
+              : "Neue Ausgabe dokumentieren"
+          }
+          size="lg"
+        >
+          {activeType === "work" ? (
+            <WorkForm onSuccess={closeModal} />
+          ) : (
+            <ExpenseForm onSuccess={closeModal} />
+          )}
+        </Modal>
+      )}
     </>
   );
 }
