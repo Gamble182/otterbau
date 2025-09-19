@@ -1,5 +1,5 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, memo } from "react";
 import { ResponsiveContainer, PieChart, Pie, Tooltip, Cell } from "recharts";
 import { useEntries } from "@/store/useEntries";
 import { ExpensePayload } from "@/lib/schemas/zod";
@@ -65,7 +65,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   return null;
 }
 
-export default function ExpensesByCategoryPie({ from, to, topN = 8 }: Props) {
+function ExpensesByCategoryPie({ from, to, topN = 15 }: Props) {
   const items = useEntries((s) => s.items);
 
   const data = useMemo(() => {
@@ -221,3 +221,5 @@ export default function ExpensesByCategoryPie({ from, to, topN = 8 }: Props) {
     </div>
   );
 }
+
+export default memo(ExpensesByCategoryPie);

@@ -1,6 +1,8 @@
 // src/components/dashboard/ExpenseTimelineChart.tsx
 "use client";
 
+import { memo } from "react";
+
 import { Card } from "@/components/ui/Card";
 import ExpensesLine from "@/components/charts/ExpensesLine";
 import type { TimeFilterType } from "@/types/dashboard";
@@ -9,7 +11,7 @@ interface ExpenseTimelineChartProps {
   timeFilter: TimeFilterType;
 }
 
-export default function ExpenseTimelineChart({
+function ExpenseTimelineChart({
   timeFilter,
 }: ExpenseTimelineChartProps) {
   return (
@@ -24,3 +26,5 @@ export default function ExpenseTimelineChart({
     </Card>
   );
 }
+
+export default memo(ExpenseTimelineChart);

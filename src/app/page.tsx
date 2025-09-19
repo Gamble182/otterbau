@@ -19,17 +19,20 @@ import ExpenseTimelineChart from "@/components/dashboard/ExpenseTimelineChart";
 // Custom Hooks
 import { useTimeFilter } from "@/hooks/useTimeFilter";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useKeyboardShortcuts, createCommonShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 
 // Types
 import type { TimeFilterType } from "@/types/dashboard";
 
 function HomePage() {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab] = useState("overview");
   const [timeFilter, setTimeFilter] = useState<TimeFilterType>("month");
 
   // QuickAdd State Management
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickAddType, setQuickAddType] = useState<"work" | "expense">("work");
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
   // Custom Hooks
   const filterDates = useTimeFilter(timeFilter);
@@ -49,6 +52,14 @@ function HomePage() {
   const closeQuickAdd = () => {
     setShowQuickAdd(false);
   };
+
+  // Keyboard shortcuts
+  const shortcuts = createCommonShortcuts({
+    onNewEntry: openWorkDialog,
+    onHelp: () => setShowKeyboardHelp(true),
+  });
+
+  useKeyboardShortcuts(shortcuts);
 
   return (
     <AppShell>
@@ -155,6 +166,13 @@ function HomePage() {
             </div>
           </div>
         )}
+
+        {/* Keyboard Shortcuts Help */}
+        <KeyboardShortcutsHelp
+          shortcuts={shortcuts}
+          isOpen={showKeyboardHelp}
+          onClose={() => setShowKeyboardHelp(false)}
+        />
       </div>
     </AppShell>
   );

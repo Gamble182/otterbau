@@ -268,7 +268,7 @@ export default function SettingsPage() {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as "import" | "export" | "data")}
                 className={`tab-item ${activeTab === tab.id ? "active" : ""}`}
               >
                 <span className="text-lg">{tab.icon}</span>

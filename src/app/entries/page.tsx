@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { useEntries } from "@/store/useEntries";
 import { usePersons } from "@/store/usePersons";
 import type { Entry, WorkPayload, ExpensePayload } from "@/lib/schemas/zod";
+import type { SortableValue } from "@/types/sorting";
 
 type SortKey = "date" | "createdAt" | "value" | "name" | "category";
 type SortOrder = "asc" | "desc";
@@ -141,7 +142,7 @@ export default function EntriesPage() {
       const aPayload = a.payload as WorkPayload;
       const bPayload = b.payload as WorkPayload;
 
-      let aVal: any, bVal: any;
+      let aVal: SortableValue, bVal: SortableValue;
 
       switch (workSort.key) {
         case "date":
@@ -225,7 +226,7 @@ export default function EntriesPage() {
       const aPayload = a.payload as ExpensePayload;
       const bPayload = b.payload as ExpensePayload;
 
-      let aVal: any, bVal: any;
+      let aVal: SortableValue, bVal: SortableValue;
 
       switch (expenseSort.key) {
         case "date":

@@ -1,5 +1,5 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, memo } from "react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -55,7 +55,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   return null;
 }
 
-export default function WorkByPersonBar({ from, to, topN = 10 }: Props) {
+function WorkByPersonBar({ from, to, topN = 10 }: Props) {
   const items = useEntries((s) => s.items);
 
   const data = useMemo(() => {
@@ -197,3 +197,5 @@ export default function WorkByPersonBar({ from, to, topN = 10 }: Props) {
     </div>
   );
 }
+
+export default memo(WorkByPersonBar);

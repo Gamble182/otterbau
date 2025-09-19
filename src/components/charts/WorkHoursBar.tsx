@@ -1,5 +1,5 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, memo } from "react";
 import {
   BarChart,
   Bar,
@@ -48,7 +48,7 @@ function startOfWeek(d: Date) {
   return c;
 }
 
-export default function WorkHoursBar() {
+function WorkHoursBar() {
   const items = useEntries((s) => s.items);
 
   const data = useMemo(() => {
@@ -179,3 +179,5 @@ export default function WorkHoursBar() {
     </div>
   );
 }
+
+export default memo(WorkHoursBar);

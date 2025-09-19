@@ -1,5 +1,5 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, memo } from "react";
 import {
   AreaChart,
   Area,
@@ -59,7 +59,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   return null;
 }
 
-export default function ExpensesLine() {
+function ExpensesLine() {
   const items = useEntries((s) => s.items);
 
   const data = useMemo(() => {
@@ -220,3 +220,5 @@ export default function ExpensesLine() {
     </div>
   );
 }
+
+export default memo(ExpensesLine);
