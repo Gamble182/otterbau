@@ -3,7 +3,6 @@
 import { useState } from "react";
 import AppShell from "@/components/AppShell";
 import QuickAdd from "@/components/QuickAdd";
-import { Card } from "@/components/ui/Card";
 
 // Dashboard Komponenten
 import QuickAddButtons from "@/components/dashboard/QuickAddButtons";
@@ -17,16 +16,29 @@ import ExpenseCategoryChart from "@/components/dashboard/ExpenseCategoryChart";
 import ExpenseTimelineChart from "@/components/dashboard/ExpenseTimelineChart";
 
 // Custom Hooks
-import {
-  useMonthYearFilter,
-  useMonthYearStats,
-} from "@/hooks/useMonthYearFilter";
+import { useMonthYearFilter } from "@/hooks/useMonthYearFilter";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import {
   useKeyboardShortcuts,
   createCommonShortcuts,
 } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
+import { Card } from "@/components/ui/Card";
+
+const MONTH_NAMES = [
+  "Januar",
+  "Februar",
+  "März",
+  "April",
+  "Mai",
+  "Juni",
+  "Juli",
+  "August",
+  "September",
+  "Oktober",
+  "November",
+  "Dezember",
+];
 
 function HomePage() {
   // QuickAdd State Management
@@ -39,13 +51,18 @@ function HomePage() {
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth());
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
 
-  // Custom Hooks
+  // Custom Hooks - verwende useMonthYearFilter direkt
   const filterDates = useMonthYearFilter({
     month: selectedMonth,
     year: selectedYear,
   });
   const stats = useDashboardStats(filterDates);
-  const monthYearStats = useMonthYearStats(selectedMonth, selectedYear);
+
+  // Berechne Display-Informationen inline
+  const displayName = `${MONTH_NAMES[selectedMonth]} ${selectedYear}`;
+  const isCurrentMonth =
+    selectedMonth === currentDate.getMonth() &&
+    selectedYear === currentDate.getFullYear();
 
   // QuickAdd Handler Functions
   const openWorkDialog = () => {
@@ -101,8 +118,7 @@ function HomePage() {
         {/* Section 5: Gefilterte Statistiken */}
         <DashboardStats
           stats={stats}
-          selectedMonth={selectedMonth}
-          selectedYear={selectedYear}
+          timeFilter="month"
         />
 
         {/* Chart 3: Ausgabenverlauf - GEFILTERT nach Monat/Jahr */}
@@ -126,8 +142,8 @@ function HomePage() {
             <div className="status-indicator status-offline">
               <div className="status-led status-led-neutral" />
               <span className="font-medium">
-                {monthYearStats.displayName}
-                {monthYearStats.isCurrentMonth && " (Aktuell)"}
+                {displayName}
+                {isCurrentMonth && " (Aktuell)"}
               </span>
             </div>
           </div>
