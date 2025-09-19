@@ -18,16 +18,17 @@ export function useDashboardStats(
     let expenseEntries = 0;
 
     for (const e of allEntries) {
+      // Prüfe ob das Entry im gewählten Zeitraum liegt
       if (e.date >= from && e.date <= to) {
         if (e.type === "work") {
           const payload = e.payload as WorkPayload;
-          const h = Number(payload.hours ?? 0);
-          totalHours += h;
+          const hours = Number(payload.hours ?? 0);
+          totalHours += hours;
           workEntries++;
         } else if (e.type === "expense") {
           const payload = e.payload as ExpensePayload;
-          const v = Number(payload.total ?? 0);
-          totalExpenses += v;
+          const amount = Number(payload.total ?? 0);
+          totalExpenses += amount;
           expenseEntries++;
         }
       }
@@ -39,5 +40,5 @@ export function useDashboardStats(
       workEntries,
       expenseEntries,
     };
-  }, [allEntries, filterDates]);
+  }, [allEntries, filterDates.from, filterDates.to]);
 }

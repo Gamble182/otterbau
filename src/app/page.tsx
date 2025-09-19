@@ -11,32 +11,41 @@ import TimeFilter from "@/components/dashboard/TimeFilter";
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import ProjectProgress from "@/components/dashboard/ProjectProgress";
 
-// Chart Wrapper Komponenten
+// Chart Wrapper Komponenten - Historische Daten
 import WorkHoursChart from "@/components/dashboard/WorkHoursChart";
 import ExpenseCategoryChart from "@/components/dashboard/ExpenseCategoryChart";
 import ExpenseTimelineChart from "@/components/dashboard/ExpenseTimelineChart";
 
 // Custom Hooks
-import { useTimeFilter } from "@/hooks/useTimeFilter";
+import {
+  useMonthYearFilter,
+  useMonthYearStats,
+} from "@/hooks/useMonthYearFilter";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
-import { useKeyboardShortcuts, createCommonShortcuts } from "@/hooks/useKeyboardShortcuts";
+import {
+  useKeyboardShortcuts,
+  createCommonShortcuts,
+} from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 
-// Types
-import type { TimeFilterType } from "@/types/dashboard";
-
 function HomePage() {
-  const [activeTab] = useState("overview");
-  const [timeFilter, setTimeFilter] = useState<TimeFilterType>("month");
-
   // QuickAdd State Management
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickAddType, setQuickAddType] = useState<"work" | "expense">("work");
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
+  // Monats/Jahres-Filter State
+  const currentDate = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth());
+  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+
   // Custom Hooks
-  const filterDates = useTimeFilter(timeFilter);
+  const filterDates = useMonthYearFilter({
+    month: selectedMonth,
+    year: selectedYear,
+  });
   const stats = useDashboardStats(filterDates);
+  const monthYearStats = useMonthYearStats(selectedMonth, selectedYear);
 
   // QuickAdd Handler Functions
   const openWorkDialog = () => {
@@ -73,66 +82,35 @@ function HomePage() {
         {/* Section 2: Projektfortschritt */}
         <ProjectProgress />
 
-        {/* Section 3: Kern-Charts - größer und prominenter */}
+        {/* Section 3: Kern-Charts - HISTORISCHE DATEN (ungefiltert) */}
 
-        {/* Chart 1: Arbeitsstunden pro Person (Kernchart) */}
-        <WorkHoursChart filterDates={filterDates} timeFilter={timeFilter} />
+        {/* Chart 1: Arbeitsstunden pro Person - ALLE DATEN */}
+        <WorkHoursChart />
 
-        {/* Chart 2: Ausgaben nach Kategorie (Kernchart) */}
-        <ExpenseCategoryChart
-          filterDates={filterDates}
-          timeFilter={timeFilter}
-        />
+        {/* Chart 2: Ausgaben nach Kategorie - ALLE DATEN - Vergrößert */}
+        <ExpenseCategoryChart />
 
-        {/* Section 4: Globaler Zeit-Filter */}
+        {/* Section 4: Monats/Jahres-Filter */}
         <TimeFilter
-          timeFilter={timeFilter}
-          onTimeFilterChange={setTimeFilter}
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
+          onMonthChange={setSelectedMonth}
+          onYearChange={setSelectedYear}
         />
 
-        {/* Section 5: Relevante Statistiken basierend auf Zeitfilter */}
-        <DashboardStats stats={stats} timeFilter={timeFilter} />
+        {/* Section 5: Gefilterte Statistiken */}
+        <DashboardStats
+          stats={stats}
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
+        />
 
-        {/* Chart 3: Ausgabenverlauf (sekundär) */}
-        <ExpenseTimelineChart timeFilter={timeFilter} />
-
-        {/* Content based on active tab */}
-        {activeTab === "work" && (
-          <div className="space-y-6 animate-slide-up">
-            <div className="text-center py-8">
-              <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-4">
-                Arbeitszeit-Fokus
-              </h3>
-              <p className="text-[var(--text-secondary)] mb-6">
-                Detailierte Arbeitszeit-Auswertungen und spezifische
-                Statistiken.
-              </p>
-              <div className="inline-block p-4 rounded-xl bg-gradient-to-r from-[var(--accent-primary)]/10 to-[var(--accent-secondary)]/10 border border-[var(--accent-primary)]/20">
-                <p className="text-sm text-[var(--text-secondary)]">
-                  🚧 Arbeitszeit-spezifische Ansicht wird hier erweitert
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "expenses" && (
-          <div className="space-y-6 animate-slide-up">
-            <div className="text-center py-8">
-              <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-4">
-                Ausgaben-Fokus
-              </h3>
-              <p className="text-[var(--text-secondary)] mb-6">
-                Detailierte Ausgaben-Auswertungen und Budget-Übersichten.
-              </p>
-              <div className="inline-block p-4 rounded-xl bg-gradient-to-r from-[var(--coral-red)]/10 to-[var(--deep-red)]/10 border border-[var(--coral-red)]/20">
-                <p className="text-sm text-[var(--text-secondary)]">
-                  🚧 Ausgaben-spezifische Ansicht wird hier erweitert
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Chart 3: Ausgabenverlauf - GEFILTERT nach Monat/Jahr */}
+        <ExpenseTimelineChart
+          filterDates={filterDates}
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
+        />
 
         {/* Footer Status */}
         <Card variant="glass" className="backdrop-blur">
@@ -148,7 +126,8 @@ function HomePage() {
             <div className="status-indicator status-offline">
               <div className="status-led status-led-neutral" />
               <span className="font-medium">
-                Projekt {Math.round((stats.totalHours / 1000) * 100)}% komplett
+                {monthYearStats.displayName}
+                {monthYearStats.isCurrentMonth && " (Aktuell)"}
               </span>
             </div>
           </div>

@@ -13,9 +13,12 @@ import { ExpensePayload } from "@/lib/schemas/zod";
 
 interface ExpenseChartData {
   label: string;
+  day: number;
   key: string;
   value: number;
   cumulative: number;
+  isWeekend: boolean;
+  isToday: boolean;
 }
 
 interface TooltipPayload {
@@ -23,6 +26,13 @@ interface TooltipPayload {
   value: number;
   color: string;
   payload: ExpenseChartData;
+}
+
+interface FilteredExpensesLineProps {
+  from?: string;
+  to?: string;
+  selectedMonth?: number;
+  selectedYear?: number;
 }
 
 // Custom Tooltip Component with Sony styling
@@ -34,10 +44,20 @@ interface CustomTooltipProps {
 
 function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (active && payload && payload.length) {
+    const data = payload[0].payload;
     return (
       <div className="bg-[var(--bg-surface-elevated)] backdrop-blur-xl p-4 rounded-xl shadow-xl border border-[var(--border-emphasis)]">
         <p className="text-sm font-semibold text-[var(--text-primary)] mb-3">
-          {label}. des Monats
+          {label}. Tag{" "}
+          {data.isWeekend && (
+            <span className="text-[var(--coral-red)]">(Wochenende)</span>
+          )}
+          {data.isToday && (
+            <span className="text-[var(--accent-primary)] font-bold">
+              {" "}
+              (Heute)
+            </span>
+          )}
         </p>
         {payload?.map((entry: TooltipPayload, index: number) => (
           <div key={index} className="flex items-center gap-3 mb-1">
@@ -59,28 +79,65 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   return null;
 }
 
-function ExpensesLine() {
+function FilteredExpensesLine({
+  from,
+  to,
+  selectedMonth = new Date().getMonth(),
+  selectedYear = new Date().getFullYear(),
+}: FilteredExpensesLineProps) {
   const items = useEntries((s) => s.items);
 
   const data = useMemo(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
+    // Verwende die übergebenen Parameter oder berechne für den ausgewählten Monat
+    const year = selectedYear;
+    const month = selectedMonth;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const today = new Date();
+    const isCurrentMonth =
+      today.getFullYear() === year && today.getMonth() === month;
 
-    const arr = Array.from({ length: daysInMonth }, (_, i) => ({
-      label: String(i + 1),
-      key: `${year}-${String(month + 1).padStart(2, "0")}-${String(
-        i + 1
-      ).padStart(2, "0")}`,
-      value: 0,
-      cumulative: 0,
-    }));
+    const arr = Array.from({ length: daysInMonth }, (_, i) => {
+      const dayNumber = i + 1;
+      const date = new Date(year, month, dayNumber);
+      const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(
+        dayNumber
+      ).padStart(2, "0")}`;
 
-    for (const e of items.filter((e) => e.type === "expense")) {
+      return {
+        label: String(dayNumber),
+        day: dayNumber,
+        key,
+        value: 0,
+        cumulative: 0,
+        isWeekend: date.getDay() === 0 || date.getDay() === 6,
+        isToday: isCurrentMonth && dayNumber === today.getDate(),
+      };
+    });
+
+    // Filter nach Datum wenn from/to gesetzt sind
+    const filteredItems = items.filter((e) => {
+      if (e.type !== "expense") return false;
+      if (from && e.date < from) return false;
+      if (to && e.date > to) return false;
+
+      // Zusätzlicher Filter für den ausgewählten Monat
+      if (!from || !to) {
+        const entryDate = new Date(e.date);
+        return (
+          entryDate.getFullYear() === year && entryDate.getMonth() === month
+        );
+      }
+
+      return true;
+    });
+
+    // Ausgaben zu den entsprechenden Tagen hinzufügen
+    for (const e of filteredItems) {
       const k = e.date.slice(0, 10);
       const row = arr.find((x) => x.key === k);
-      if (row) row.value += Number((e.payload as ExpensePayload).total ?? 0);
+      if (row) {
+        row.value += Number((e.payload as ExpensePayload).total ?? 0);
+      }
     }
 
     // Calculate cumulative values
@@ -90,12 +147,14 @@ function ExpensesLine() {
       row.cumulative = sum;
     });
 
-    // Show only up to today + 3 days
-    return arr.filter((_, i) => i < now.getDate() + 3);
-  }, [items]);
+    return arr;
+  }, [items, from, to, selectedMonth, selectedYear]);
 
   // Check if there are expenses
   const hasExpenses = data.some((d) => d.value > 0);
+  const totalExpenses = data.reduce((sum, d) => sum + d.value, 0);
+  const averagePerDay = totalExpenses / data.length;
+  const maxSingleDay = Math.max(...data.map((d) => d.value));
 
   if (!hasExpenses) {
     return (
@@ -117,10 +176,10 @@ function ExpensesLine() {
             </svg>
           </div>
           <p className="text-[var(--text-secondary)] font-medium text-lg mb-1">
-            Noch keine Ausgaben erfasst
+            Keine Ausgaben im gewählten Zeitraum
           </p>
           <p className="text-[var(--text-tertiary)] text-sm">
-            Füge deine ersten Ausgaben hinzu!
+            Wähle einen anderen Monat oder füge Ausgaben hinzu!
           </p>
         </div>
       </div>
@@ -128,97 +187,158 @@ function ExpensesLine() {
   }
 
   return (
-    <div className="h-full w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
-          data={data}
-          margin={{ top: 20, right: 20, left: 10, bottom: 5 }}
-        >
-          <defs>
-            <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop
-                offset="0%"
-                stopColor="var(--coral-red)"
-                stopOpacity={0.3}
-              />
-              <stop
-                offset="50%"
-                stopColor="var(--deep-red)"
-                stopOpacity={0.1}
-              />
-              <stop offset="100%" stopColor="var(--deep-red)" stopOpacity={0} />
-            </linearGradient>
-            <linearGradient id="cumulativeGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop
-                offset="0%"
-                stopColor="var(--accent-primary)"
-                stopOpacity={0.2}
-              />
-              <stop
-                offset="100%"
-                stopColor="var(--accent-secondary)"
-                stopOpacity={0}
-              />
-            </linearGradient>
-          </defs>
+    <div className="h-full w-full flex flex-col">
+      {/* Chart */}
+      <div className="flex-1">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart
+            data={data}
+            margin={{ top: 20, right: 20, left: 10, bottom: 5 }}
+          >
+            <defs>
+              <linearGradient
+                id="expenseGradientFiltered"
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
+                <stop
+                  offset="0%"
+                  stopColor="var(--coral-red)"
+                  stopOpacity={0.4}
+                />
+                <stop
+                  offset="50%"
+                  stopColor="var(--deep-red)"
+                  stopOpacity={0.2}
+                />
+                <stop
+                  offset="100%"
+                  stopColor="var(--deep-red)"
+                  stopOpacity={0}
+                />
+              </linearGradient>
+              <linearGradient
+                id="cumulativeGradientFiltered"
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
+                <stop
+                  offset="0%"
+                  stopColor="var(--accent-primary)"
+                  stopOpacity={0.3}
+                />
+                <stop
+                  offset="100%"
+                  stopColor="var(--accent-secondary)"
+                  stopOpacity={0.1}
+                />
+              </linearGradient>
+            </defs>
 
-          <XAxis
-            dataKey="label"
-            axisLine={false}
-            tickLine={false}
-            tick={{
-              fill: "var(--text-tertiary)",
-              fontSize: 11,
-              fontFamily:
-                "-apple-system, BlinkMacSystemFont, SF Pro Display, system-ui, sans-serif",
-            }}
-          />
-          <YAxis
-            axisLine={false}
-            tickLine={false}
-            tick={{
-              fill: "var(--text-tertiary)",
-              fontSize: 11,
-              fontFamily:
-                "-apple-system, BlinkMacSystemFont, SF Pro Display, system-ui, sans-serif",
-            }}
-            width={40}
-          />
-          <Tooltip
-            content={<CustomTooltip />}
-            cursor={{
-              stroke: "var(--accent-primary)",
-              strokeWidth: 2,
-              strokeDasharray: "4 4",
-              strokeOpacity: 0.7,
-            }}
-          />
+            <XAxis
+              dataKey="label"
+              axisLine={false}
+              tickLine={false}
+              tick={{
+                fill: "var(--text-tertiary)",
+                fontSize: 11,
+                fontFamily:
+                  "-apple-system, BlinkMacSystemFont, SF Pro Display, system-ui, sans-serif",
+              }}
+              interval="preserveStartEnd"
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{
+                fill: "var(--text-tertiary)",
+                fontSize: 11,
+                fontFamily:
+                  "-apple-system, BlinkMacSystemFont, SF Pro Display, system-ui, sans-serif",
+              }}
+              width={50}
+            />
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={{
+                stroke: "var(--accent-primary)",
+                strokeWidth: 2,
+                strokeDasharray: "4 4",
+                strokeOpacity: 0.7,
+              }}
+            />
 
-          {/* Daily Expenses Area */}
-          <Area
-            type="monotone"
-            dataKey="value"
-            stroke="var(--coral-red)"
-            strokeWidth={3}
-            fill="url(#expenseGradient)"
-            dot={{
-              fill: "var(--coral-red)",
-              strokeWidth: 0,
-              r: 4,
-              filter: "drop-shadow(0 2px 4px rgba(199, 62, 29, 0.3))",
-            }}
-            activeDot={{
-              r: 6,
-              stroke: "var(--coral-red)",
-              strokeWidth: 3,
-              fill: "var(--bg-surface-elevated)",
-              filter: "drop-shadow(0 2px 8px rgba(199, 62, 29, 0.4))",
-            }}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
+            {/* Daily Expenses Area */}
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke="var(--coral-red)"
+              strokeWidth={3}
+              fill="url(#expenseGradientFiltered)"
+              dot={{
+                fill: "var(--coral-red)",
+                strokeWidth: 0,
+                r: 4,
+                filter: "drop-shadow(0 2px 4px rgba(199, 62, 29, 0.3))",
+              }}
+              activeDot={{
+                r: 8,
+                stroke: "var(--coral-red)",
+                strokeWidth: 3,
+                fill: "var(--bg-surface-elevated)",
+                filter: "drop-shadow(0 2px 8px rgba(199, 62, 29, 0.4))",
+              }}
+            />
+
+            {/* Cumulative line */}
+            <Area
+              type="monotone"
+              dataKey="cumulative"
+              stroke="var(--accent-primary)"
+              strokeWidth={2}
+              strokeDasharray="5 5"
+              fill="url(#cumulativeGradientFiltered)"
+              dot={false}
+              activeDot={{
+                r: 6,
+                stroke: "var(--accent-primary)",
+                strokeWidth: 2,
+                fill: "var(--bg-surface-elevated)",
+              }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Summary Stats */}
+      <div className="mt-4 pt-4 border-t border-[var(--border-subtle)] grid grid-cols-3 gap-4 text-center">
+        <div>
+          <div className="text-sm text-[var(--text-secondary)]">Gesamt</div>
+          <div className="text-lg font-bold text-[var(--coral-red)]">
+            {totalExpenses.toFixed(2)}€
+          </div>
+        </div>
+        <div>
+          <div className="text-sm text-[var(--text-secondary)]">Ø pro Tag</div>
+          <div className="text-lg font-bold text-[var(--text-primary)]">
+            {averagePerDay.toFixed(2)}€
+          </div>
+        </div>
+        <div>
+          <div className="text-sm text-[var(--text-secondary)]">
+            Höchster Tag
+          </div>
+          <div className="text-lg font-bold text-[var(--deep-red)]">
+            {maxSingleDay.toFixed(2)}€
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-export default memo(ExpensesLine);
+export default memo(FilteredExpensesLine);
