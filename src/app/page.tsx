@@ -59,19 +59,10 @@ function HomePage() {
           onExpenseClick={openExpenseDialog}
         />
 
-        {/* Section 2: Globaler Zeit-Filter */}
-        <TimeFilter
-          timeFilter={timeFilter}
-          onTimeFilterChange={setTimeFilter}
-        />
-
-        {/* Section 3: Relevante Statistiken basierend auf Zeitfilter */}
-        <DashboardStats stats={stats} timeFilter={timeFilter} />
-
-        {/* Section 4: Projektfortschritt */}
+        {/* Section 2: Projektfortschritt */}
         <ProjectProgress />
 
-        {/* Section 5: Kern-Charts - größer und prominenter */}
+        {/* Section 3: Kern-Charts - größer und prominenter */}
 
         {/* Chart 1: Arbeitsstunden pro Person (Kernchart) */}
         <WorkHoursChart filterDates={filterDates} timeFilter={timeFilter} />
@@ -81,6 +72,15 @@ function HomePage() {
           filterDates={filterDates}
           timeFilter={timeFilter}
         />
+
+        {/* Section 4: Globaler Zeit-Filter */}
+        <TimeFilter
+          timeFilter={timeFilter}
+          onTimeFilterChange={setTimeFilter}
+        />
+
+        {/* Section 5: Relevante Statistiken basierend auf Zeitfilter */}
+        <DashboardStats stats={stats} timeFilter={timeFilter} />
 
         {/* Chart 3: Ausgabenverlauf (sekundär) */}
         <ExpenseTimelineChart timeFilter={timeFilter} />
