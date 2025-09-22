@@ -2,51 +2,52 @@
 "use client";
 
 import { memo } from "react";
-
 import { Card } from "@/components/ui/Card";
 import ExpensesLine from "@/components/charts/ExpensesLine";
-import type { TimeFilterRange } from "@/types/dashboard";
 
 interface ExpenseTimelineChartProps {
-  filterDates: TimeFilterRange;
-  selectedMonth: number;
-  selectedYear: number;
+  filterDates: {
+    from: string;
+    to: string;
+  };
+  displayName: string;
+  isFiltered: boolean;
 }
-
-const MONTH_NAMES = [
-  "Januar",
-  "Februar",
-  "März",
-  "April",
-  "Mai",
-  "Juni",
-  "Juli",
-  "August",
-  "September",
-  "Oktober",
-  "November",
-  "Dezember",
-];
 
 function ExpenseTimelineChart({
   filterDates,
-  selectedMonth,
-  selectedYear,
+  displayName,
+  isFiltered,
 }: ExpenseTimelineChartProps) {
-  const monthName = MONTH_NAMES[selectedMonth];
+  // Dynamische Titel und Untertitel
+  const getTitle = () => {
+    if (!isFiltered) {
+      return "Ausgabenverlauf - Gesamte Historie";
+    }
+    return `Ausgabenverlauf - ${displayName}`;
+  };
+
+  const getSubtitle = () => {
+    if (!isFiltered) {
+      return "Alle historischen Ausgabendaten";
+    }
+    if (displayName.includes("-")) {
+      return "Tägliche Ausgaben im ausgewählten Zeitraum";
+    }
+    return "Tägliche Ausgaben im ausgewählten Monat";
+  };
 
   return (
     <Card
-      title={`Ausgabenverlauf - ${monthName} ${selectedYear}`}
-      subtitle="Tägliche Ausgaben im ausgewählten Monat"
+      title={getTitle()}
+      subtitle={getSubtitle()}
       className="animate-fade-in"
     >
       <div className="h-80 px-2 sm:px-0">
         <ExpensesLine
           from={filterDates.from}
           to={filterDates.to}
-          selectedMonth={selectedMonth}
-          selectedYear={selectedYear}
+          // Für das Chart ist es egal ob es gefiltert ist - es verwendet from/to
         />
       </div>
     </Card>

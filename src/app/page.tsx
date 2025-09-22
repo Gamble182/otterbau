@@ -1,3 +1,4 @@
+// src/app/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -16,7 +17,7 @@ import ExpenseCategoryChart from "@/components/dashboard/ExpenseCategoryChart";
 import ExpenseTimelineChart from "@/components/dashboard/ExpenseTimelineChart";
 
 // Custom Hooks
-import { useMonthYearFilter } from "@/hooks/useMonthYearFilter";
+import { useEnhancedTimeFilter } from "@/hooks/useEnhancedTimeFilter";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import {
   useKeyboardShortcuts,
@@ -25,44 +26,26 @@ import {
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { Card } from "@/components/ui/Card";
 
-const MONTH_NAMES = [
-  "Januar",
-  "Februar",
-  "März",
-  "April",
-  "Mai",
-  "Juni",
-  "Juli",
-  "August",
-  "September",
-  "Oktober",
-  "November",
-  "Dezember",
-];
-
 function HomePage() {
   // QuickAdd State Management
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickAddType, setQuickAddType] = useState<"work" | "expense">("work");
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
-  // Monats/Jahres-Filter State
+  // Enhanced Time Filter State
   const currentDate = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth());
-  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
-
-  // Custom Hooks - verwende useMonthYearFilter direkt
-  const filterDates = useMonthYearFilter({
-    month: selectedMonth,
-    year: selectedYear,
+  const [timeFilterState, setTimeFilterState] = useState({
+    selectedOption: "gesamt" as "gesamt" | "custom",
+    fromMonth: currentDate.getMonth(),
+    fromYear: currentDate.getFullYear(),
+    toMonth: currentDate.getMonth(),
+    toYear: currentDate.getFullYear(),
   });
-  const stats = useDashboardStats(filterDates);
 
-  // Berechne Display-Informationen inline
-  const displayName = `${MONTH_NAMES[selectedMonth]} ${selectedYear}`;
-  const isCurrentMonth =
-    selectedMonth === currentDate.getMonth() &&
-    selectedYear === currentDate.getFullYear();
+  // Custom Hooks - verwende useEnhancedTimeFilter
+  const { filterDates, displayName, isFiltered } =
+    useEnhancedTimeFilter(timeFilterState);
+  const stats = useDashboardStats(filterDates);
 
   // QuickAdd Handler Functions
   const openWorkDialog = () => {
@@ -77,6 +60,30 @@ function HomePage() {
 
   const closeQuickAdd = () => {
     setShowQuickAdd(false);
+  };
+
+  // Time Filter Handler Functions
+  const handleOptionChange = (option: "gesamt" | "custom") => {
+    setTimeFilterState((prev) => ({
+      ...prev,
+      selectedOption: option,
+    }));
+  };
+
+  const handleFromChange = (month: number, year: number) => {
+    setTimeFilterState((prev) => ({
+      ...prev,
+      fromMonth: month,
+      fromYear: year,
+    }));
+  };
+
+  const handleToChange = (month: number, year: number) => {
+    setTimeFilterState((prev) => ({
+      ...prev,
+      toMonth: month,
+      toYear: year,
+    }));
   };
 
   // Keyboard shortcuts
@@ -101,31 +108,36 @@ function HomePage() {
 
         {/* Section 3: Kern-Charts - HISTORISCHE DATEN (ungefiltert) */}
 
-        {/* Chart 1: Arbeitsstunden pro Person - ALLE DATEN */}
+        {/* Chart 1: Arbeitsstunden pro Person - ALLE DATEN - Vergrößert */}
         <WorkHoursChart />
 
         {/* Chart 2: Ausgaben nach Kategorie - ALLE DATEN - Vergrößert */}
         <ExpenseCategoryChart />
 
-        {/* Section 4: Monats/Jahres-Filter */}
+        {/* Section 4: Zeitraum-Filter */}
         <TimeFilter
-          selectedMonth={selectedMonth}
-          selectedYear={selectedYear}
-          onMonthChange={setSelectedMonth}
-          onYearChange={setSelectedYear}
+          selectedOption={timeFilterState.selectedOption}
+          fromMonth={timeFilterState.fromMonth}
+          fromYear={timeFilterState.fromYear}
+          toMonth={timeFilterState.toMonth}
+          toYear={timeFilterState.toYear}
+          onOptionChange={handleOptionChange}
+          onFromChange={handleFromChange}
+          onToChange={handleToChange}
         />
 
         {/* Section 5: Gefilterte Statistiken */}
         <DashboardStats
           stats={stats}
-          timeFilter="month"
+          displayName={displayName}
+          isFiltered={isFiltered}
         />
 
-        {/* Chart 3: Ausgabenverlauf - GEFILTERT nach Monat/Jahr */}
+        {/* Chart 3: Ausgabenverlauf - GEFILTERT nach Zeitraum */}
         <ExpenseTimelineChart
           filterDates={filterDates}
-          selectedMonth={selectedMonth}
-          selectedYear={selectedYear}
+          displayName={displayName}
+          isFiltered={isFiltered}
         />
 
         {/* Footer Status */}
@@ -143,7 +155,7 @@ function HomePage() {
               <div className="status-led status-led-neutral" />
               <span className="font-medium">
                 {displayName}
-                {isCurrentMonth && " (Aktuell)"}
+                {!isFiltered && " (Alle Daten)"}
               </span>
             </div>
           </div>

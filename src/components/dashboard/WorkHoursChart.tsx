@@ -14,11 +14,12 @@ function WorkHoursChart() {
       subtitle="Alle historischen Daten - Kernchart"
       className="animate-fade-in"
     >
-      <div className="h-96 px-2 sm:px-0">
+      {/* Vergrößerte Höhe für bessere Lesbarkeit der Namen */}
+      <div className="h-[500px] px-2 sm:px-0">
         <ChartErrorBoundary>
           <WorkByPersonBar
             // Keine Filter - alle historischen Daten
-            topN={0} // Alle Personen anzeigen
+            topN={5} // Alle Personen anzeigen
           />
         </ChartErrorBoundary>
       </div>

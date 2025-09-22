@@ -1,3 +1,4 @@
+// src/components/charts/WorkByPersonBar.tsx
 "use client";
 import { useMemo, memo } from "react";
 import {
@@ -73,7 +74,7 @@ function WorkByPersonBar({ from, to, topN = 10 }: Props) {
     }
 
     let arr = Array.from(byPerson, ([name, value]) => ({
-      name: name.length > 12 ? name.substring(0, 12) + "..." : name,
+      name: name, // Vollständiger Name für bessere Lesbarkeit
       fullName: name,
       value: Number(value.toFixed(1)),
     }));
@@ -114,14 +115,17 @@ function WorkByPersonBar({ from, to, topN = 10 }: Props) {
     );
   }
 
+  // Berechne dynamische Höhe basierend auf Anzahl der Personen
+  const minHeight = Math.max(400, data.length * 60); // Mindestens 60px pro Person
+
   // Use horizontal layout for better readability of person names
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full" style={{ minHeight: `${minHeight}px` }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
           layout="vertical"
-          margin={{ top: 20, right: 20, left: 10, bottom: 20 }}
+          margin={{ top: 20, right: 30, left: 120, bottom: 20 }} // Mehr Platz links für Namen
         >
           <XAxis
             type="number"
@@ -141,15 +145,20 @@ function WorkByPersonBar({ from, to, topN = 10 }: Props) {
             tickLine={false}
             tick={{
               fill: "var(--text-secondary)",
-              fontSize: 12,
-              fontWeight: 500,
+              fontSize: 13, // Größere Schrift für bessere Lesbarkeit
+              fontWeight: 600,
               fontFamily:
                 "-apple-system, BlinkMacSystemFont, SF Pro Display, system-ui, sans-serif",
             }}
-            width={80}
+            width={100} // Mehr Platz für längere Namen
+            interval={0} // Alle Labels anzeigen
           />
           <Tooltip content={<CustomTooltip />} />
-          <Bar dataKey="value" radius={[0, 8, 8, 0]}>
+          <Bar
+            dataKey="value"
+            radius={[0, 8, 8, 0]}
+            minPointSize={5} // Mindestgröße für sehr kleine Werte
+          >
             {data.map((entry, index) => {
               // Different colors for different persons
               const colors = [

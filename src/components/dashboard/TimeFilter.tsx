@@ -1,16 +1,19 @@
+// src/components/dashboard/TimeFilter.tsx
 "use client";
 
 import { useMemo } from "react";
 import { Card } from "@/components/ui/Card";
 import { useEntries } from "@/store/useEntries";
-import type { TimeFilterProps } from "@/types/dashboard";
 
-interface TimeFilterPropsEnhanced
-  extends Omit<TimeFilterProps, "timeFilter" | "onTimeFilterChange"> {
-  selectedMonth: number;
-  selectedYear: number;
-  onMonthChange: (month: number) => void;
-  onYearChange: (year: number) => void;
+export interface TimeFilterProps {
+  selectedOption: "gesamt" | "custom";
+  fromMonth?: number;
+  fromYear?: number;
+  toMonth?: number;
+  toYear?: number;
+  onOptionChange: (option: "gesamt" | "custom") => void;
+  onFromChange: (month: number, year: number) => void;
+  onToChange: (month: number, year: number) => void;
 }
 
 const MONTH_NAMES = [
@@ -29,11 +32,15 @@ const MONTH_NAMES = [
 ];
 
 export default function TimeFilter({
-  selectedMonth,
-  selectedYear,
-  onMonthChange,
-  onYearChange,
-}: TimeFilterPropsEnhanced) {
+  selectedOption,
+  fromMonth,
+  fromYear,
+  toMonth,
+  toYear,
+  onOptionChange,
+  onFromChange,
+  onToChange,
+}: TimeFilterProps) {
   const entries = useEntries((s) => s.items);
 
   // Verfügbare Jahre aus den Daten extrahieren
@@ -45,32 +52,44 @@ export default function TimeFilter({
     });
 
     // Sortiert und mit aktuellem Jahr falls noch keine Daten vorhanden
-    const yearsArray = Array.from(years).sort((a, b) => b - a);
+    const yearsArray = Array.from(years).sort((a, b) => a - b);
     const currentYear = new Date().getFullYear();
     if (!yearsArray.includes(currentYear)) {
-      yearsArray.unshift(currentYear);
+      yearsArray.push(currentYear);
+      yearsArray.sort((a, b) => a - b);
     }
 
     return yearsArray;
   }, [entries]);
 
-  // Verfügbare Monate für das ausgewählte Jahr
-  const availableMonths = useMemo(() => {
-    const months = new Set<number>();
-    entries.forEach((entry) => {
-      const date = new Date(entry.date);
-      if (date.getFullYear() === selectedYear) {
-        months.add(date.getMonth());
-      }
-    });
+  // Standard-Werte für aktuellen und letzten Monat
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
 
-    // Alle Monate 0-11 verfügbar machen, aber verfügbare hervorheben
-    return Array.from({ length: 12 }, (_, i) => ({
-      value: i,
-      name: MONTH_NAMES[i],
-      hasData: months.has(i),
-    }));
-  }, [entries, selectedYear]);
+  const lastMonth = new Date();
+  lastMonth.setMonth(lastMonth.getMonth() - 1);
+  const lastMonthValue = lastMonth.getMonth();
+  const lastMonthYear = lastMonth.getFullYear();
+
+  const getDisplayText = () => {
+    if (selectedOption === "gesamt") {
+      return "Gesamte Historie";
+    }
+
+    if (
+      fromMonth !== undefined &&
+      fromYear !== undefined &&
+      toMonth !== undefined &&
+      toYear !== undefined
+    ) {
+      const fromText = `${MONTH_NAMES[fromMonth]} ${fromYear}`;
+      const toText = `${MONTH_NAMES[toMonth]} ${toYear}`;
+      return `${fromText} - ${toText}`;
+    }
+
+    return "Zeitraum wählen";
+  };
 
   return (
     <Card variant="glass">
@@ -96,80 +115,158 @@ export default function TimeFilter({
               Zeitraum filtern
             </h3>
             <p className="text-[var(--text-secondary)]">
-              Wähle einen spezifischen Monat und Jahr
+              Wähle einen spezifischen Zeitraum oder gesamte Historie
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-4 flex-wrap">
-          {/* Jahr-Dropdown */}
+          {/* Filter-Option Radio Buttons */}
           <div className="space-y-2">
             <label className="form-label text-sm font-semibold text-[var(--text-primary)]">
-              Jahr
+              Filter-Typ
             </label>
-            <select
-              value={selectedYear}
-              onChange={(e) => onYearChange(parseInt(e.target.value))}
-              className="form-select min-w-[120px] text-center font-bold"
-            >
-              {availableYears.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
+            <div className="flex gap-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="timeFilter"
+                  value="gesamt"
+                  checked={selectedOption === "gesamt"}
+                  onChange={() => onOptionChange("gesamt")}
+                  className="text-[var(--accent-primary)]"
+                />
+                <span className="text-sm font-medium text-[var(--text-primary)]">
+                  Gesamt
+                </span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="timeFilter"
+                  value="custom"
+                  checked={selectedOption === "custom"}
+                  onChange={() => onOptionChange("custom")}
+                  className="text-[var(--accent-primary)]"
+                />
+                <span className="text-sm font-medium text-[var(--text-primary)]">
+                  Zeitraum
+                </span>
+              </label>
+            </div>
           </div>
 
-          {/* Monat-Dropdown */}
-          <div className="space-y-2">
-            <label className="form-label text-sm font-semibold text-[var(--text-primary)]">
-              Monat
-            </label>
-            <select
-              value={selectedMonth}
-              onChange={(e) => onMonthChange(parseInt(e.target.value))}
-              className="form-select min-w-[140px] text-center font-bold"
-            >
-              {availableMonths.map((month) => (
-                <option
-                  key={month.value}
-                  value={month.value}
-                  className={month.hasData ? "" : "text-gray-400"}
+          {/* Von-Bis Selects - nur wenn custom ausgewählt */}
+          {selectedOption === "custom" && (
+            <>
+              {/* Von */}
+              <div className="space-y-2">
+                <label className="form-label text-sm font-semibold text-[var(--text-primary)]">
+                  Von
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    value={fromMonth ?? currentMonth}
+                    onChange={(e) =>
+                      onFromChange(
+                        parseInt(e.target.value),
+                        fromYear ?? currentYear
+                      )
+                    }
+                    className="form-select text-center font-bold"
+                  >
+                    {MONTH_NAMES.map((month, index) => (
+                      <option key={index} value={index}>
+                        {month.slice(0, 3)}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={fromYear ?? currentYear}
+                    onChange={(e) =>
+                      onFromChange(
+                        fromMonth ?? currentMonth,
+                        parseInt(e.target.value)
+                      )
+                    }
+                    className="form-select text-center font-bold"
+                  >
+                    {availableYears.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Bis */}
+              <div className="space-y-2">
+                <label className="form-label text-sm font-semibold text-[var(--text-primary)]">
+                  Bis
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    value={toMonth ?? currentMonth}
+                    onChange={(e) =>
+                      onToChange(
+                        parseInt(e.target.value),
+                        toYear ?? currentYear
+                      )
+                    }
+                    className="form-select text-center font-bold"
+                  >
+                    {MONTH_NAMES.map((month, index) => (
+                      <option key={index} value={index}>
+                        {month.slice(0, 3)}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={toYear ?? currentYear}
+                    onChange={(e) =>
+                      onToChange(
+                        toMonth ?? currentMonth,
+                        parseInt(e.target.value)
+                      )
+                    }
+                    className="form-select text-center font-bold"
+                  >
+                    {availableYears.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Quick Select Buttons */}
+              <div className="flex items-center gap-2 ml-4">
+                <button
+                  onClick={() => {
+                    onFromChange(currentMonth, currentYear);
+                    onToChange(currentMonth, currentYear);
+                  }}
+                  className="filter-pill transition-all duration-200 px-4 py-2"
                 >
-                  {month.name}
-                  {month.hasData ? "" : " (keine Daten)"}
-                </option>
-              ))}
-            </select>
-          </div>
+                  <span className="text-sm">📅</span>
+                  <span className="font-medium">Aktuell</span>
+                </button>
 
-          {/* Quick Select Buttons */}
-          <div className="flex items-center gap-2 ml-4">
-            <button
-              onClick={() => {
-                const now = new Date();
-                onYearChange(now.getFullYear());
-                onMonthChange(now.getMonth());
-              }}
-              className="filter-pill transition-all duration-200 px-4 py-2"
-            >
-              <span className="text-sm">📅</span>
-              <span className="font-medium">Aktueller Monat</span>
-            </button>
-
-            <button
-              onClick={() => {
-                const lastMonth = new Date();
-                lastMonth.setMonth(lastMonth.getMonth() - 1);
-                onYearChange(lastMonth.getFullYear());
-                onMonthChange(lastMonth.getMonth());
-              }}
-              className="filter-pill transition-all duration-200 px-4 py-2"
-            >
-              <span className="text-sm">📊</span>
-              <span className="font-medium">Letzter Monat</span>
-            </button>
-          </div>
+                <button
+                  onClick={() => {
+                    onFromChange(lastMonthValue, lastMonthYear);
+                    onToChange(lastMonthValue, lastMonthYear);
+                  }}
+                  className="filter-pill transition-all duration-200 px-4 py-2"
+                >
+                  <span className="text-sm">📊</span>
+                  <span className="font-medium">Letzter</span>
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -180,7 +277,7 @@ export default function TimeFilter({
             Ausgewählter Zeitraum:
           </div>
           <div className="text-lg font-bold text-[var(--accent-primary)]">
-            {MONTH_NAMES[selectedMonth]} {selectedYear}
+            {getDisplayText()}
           </div>
         </div>
       </div>

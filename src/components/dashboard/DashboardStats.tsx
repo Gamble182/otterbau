@@ -1,16 +1,38 @@
+// src/components/dashboard/DashboardStats.tsx
 "use client";
 
 import { StatsCard } from "@/components/ui/Card";
-import type { DashboardStatsProps } from "@/types/dashboard";
+
+interface DashboardStats {
+  totalHours: number;
+  totalExpenses: number;
+  workEntries: number;
+  expenseEntries: number;
+}
+
+interface DashboardStatsProps {
+  stats: DashboardStats;
+  displayName: string; // Dynamischer Name basierend auf Filter
+  isFiltered: boolean; // Ob ein Filter aktiv ist
+}
 
 export default function DashboardStats({
   stats,
-  timeFilter,
+  displayName,
+  isFiltered,
 }: DashboardStatsProps) {
+  // Dynamische Titel basierend auf Filter
+  const getTimeLabel = () => {
+    if (!isFiltered) return "Gesamt";
+    return displayName.includes("-") ? "Zeitraum" : "Monat";
+  };
+
+  const timeLabel = getTimeLabel();
+
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-2 sm:px-0">
       <StatsCard
-        title={`${timeFilter === "month" ? "Monat" : "Jahr"} Stunden`}
+        title={`${timeLabel} Stunden`}
         value={`${stats.totalHours.toFixed(1)}h`}
         change={`${stats.workEntries} Einträge`}
         trend={stats.totalHours > 0 ? "up" : "neutral"}
@@ -32,7 +54,7 @@ export default function DashboardStats({
       />
 
       <StatsCard
-        title={`${timeFilter === "month" ? "Monat" : "Jahr"} Ausgaben`}
+        title={`${timeLabel} Ausgaben`}
         value={`${stats.totalExpenses.toFixed(0)}€`}
         change={`${stats.expenseEntries} Ausgaben`}
         trend="neutral"
