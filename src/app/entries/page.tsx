@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import AppShell from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { useEntries } from "@/store/useEntries";
@@ -53,6 +53,7 @@ const getWeekday = (dateString: string): string => {
 };
 
 export default function EntriesPage() {
+  const [isClient, setIsClient] = useState(false);
   const entries = useEntries((s) => s.items);
   const persons = usePersons((s) => s.items);
   const removeEntry = useEntries((s) => s.remove);
@@ -82,6 +83,11 @@ export default function EntriesPage() {
   });
 
   const [activeTab, setActiveTab] = useState<"work" | "expense">("work");
+
+  // Fix hydration issue
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Extract filter options from data
   const filterOptions = useMemo(() => {
@@ -330,6 +336,28 @@ export default function EntriesPage() {
   };
 
   const hasActiveFilters = Object.values(filter).some((val) => val !== "");
+
+  // Prevent hydration mismatch by only rendering content after client initialization
+  if (!isClient) {
+    return (
+      <AppShell>
+        <div className="space-y-8">
+          {/* Loading state while client initializes */}
+          <div className="flex items-center gap-4 animate-pulse">
+            <div className="w-14 h-14 rounded-2xl bg-gray-200 animate-pulse"></div>
+            <div>
+              <div className="h-8 w-32 bg-gray-200 rounded animate-pulse mb-2"></div>
+              <div className="h-4 w-48 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="h-48 bg-gray-100 rounded-2xl animate-pulse"></div>
+            <div className="h-64 bg-gray-100 rounded-2xl animate-pulse"></div>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
@@ -848,7 +876,6 @@ export default function EntriesPage() {
           </div>
         )}
 
-        {/* Expense Entries Table */}
         {/* Expense Entries Table */}
         {activeTab === "expense" && (
           <div className="max-w-none -mx-4 px-4 lg:-mx-8 lg:px-8">
