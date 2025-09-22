@@ -6,7 +6,6 @@ import { Card } from "./ui/Card";
 import { db } from "@/lib/db/dexie";
 import { usePersons } from "@/store/usePersons";
 import { useEntries } from "@/store/useEntries";
-import type { Person, Entry } from "@/lib/schemas/zod";
 
 interface MigrationStats {
   indexedDbPersons: number;
@@ -107,8 +106,8 @@ export function MigrationTool() {
 
           // Aktualisiere personId in work entries falls nötig
           if (entry.type === 'work' && typeof payload === 'object' && payload !== null) {
-            const workPayload = payload as any;
-            if (workPayload.personName && personNameToId.has(workPayload.personName)) {
+            const workPayload = payload as Record<string, unknown>;
+            if (typeof workPayload.personName === 'string' && personNameToId.has(workPayload.personName)) {
               payload = {
                 ...workPayload,
                 personId: personNameToId.get(workPayload.personName)

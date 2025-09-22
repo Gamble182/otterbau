@@ -15,7 +15,8 @@ export class PersonsService {
         handleSupabaseError(error, 'load persons')
       }
 
-      return (data || []).map(row => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (data || []).map((row: any) => ({
         id: row.id,
         name: row.name,
         createdAt: row.created_at,
@@ -51,9 +52,9 @@ export class PersonsService {
       }
 
       return {
-        id: data.id,
-        name: data.name,
-        createdAt: data.created_at,
+        id: data!.id,
+        name: data!.name,
+        createdAt: data!.created_at,
       }
     } catch (error) {
       handleSupabaseError(error, 'add person')
@@ -108,7 +109,9 @@ export class PersonsService {
         handleSupabaseError(entriesError, 'check person entries')
       }
 
-      const hasEntries = entries?.some(entry => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const hasEntries = entries?.some((entry: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const payload = entry.payload as any
         return payload?.personId === id
       })
@@ -147,7 +150,8 @@ export class PersonsService {
         handleSupabaseError(error, 'bulk add persons')
       }
 
-      return (data || []).map(row => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (data || []).map((row: any) => ({
         id: row.id,
         name: row.name,
         createdAt: row.created_at,
@@ -185,7 +189,8 @@ export class PersonsService {
         .from('persons')
         .select('name')
 
-      const existingNames = new Set(existing?.map(p => p.name) || [])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const existingNames = new Set(existing?.map((p: any) => p.name) || [])
       const newNames = defaultNames.filter(name => !existingNames.has(name))
 
       if (newNames.length === 0) {
@@ -203,7 +208,8 @@ export class PersonsService {
 
       console.log(`${newNames.length} Default-Personen erstellt:`, newNames)
       
-      return (data || []).map(row => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (data || []).map((row: any) => ({
         id: row.id,
         name: row.name,
         createdAt: row.created_at,

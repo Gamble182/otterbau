@@ -35,11 +35,13 @@ export class EntriesService {
       }
 
       // Transform to match our Entry type
-      return (data || []).map(row => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (data || []).map((row: any) => ({
         id: row.id,
         type: row.type,
         date: row.date,
         tags: row.tags || [],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         payload: row.payload as any,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
@@ -59,6 +61,7 @@ export class EntriesService {
           type: entry.type,
           date: entry.date,
           tags: entry.tags,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           payload: entry.payload as any,
         })
         .select()
@@ -69,13 +72,14 @@ export class EntriesService {
       }
 
       return {
-        id: data.id,
-        type: data.type,
-        date: data.date,
-        tags: data.tags || [],
-        payload: data.payload as any,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at,
+        id: data!.id,
+        type: data!.type,
+        date: data!.date,
+        tags: data!.tags || [],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        payload: data!.payload as any,
+        createdAt: data!.created_at,
+        updatedAt: data!.updated_at,
       }
     } catch (error) {
       handleSupabaseError(error, 'add entry')
@@ -92,6 +96,7 @@ export class EntriesService {
           type: entry.type,
           date: entry.date,
           tags: entry.tags,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           payload: entry.payload as any,
         })
         .eq('id', entry.id)
@@ -131,6 +136,7 @@ export class EntriesService {
           type: entry.type,
           date: entry.date,
           tags: entry.tags,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           payload: entry.payload as any,
         })))
         .select()
@@ -139,11 +145,13 @@ export class EntriesService {
         handleSupabaseError(error, 'bulk add entries')
       }
 
-      return (data || []).map(row => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (data || []).map((row: any) => ({
         id: row.id,
         type: row.type,
         date: row.date,
         tags: row.tags || [],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         payload: row.payload as any,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
