@@ -840,3 +840,90 @@ body {
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+
+/* Erweiterte Status-LED Styles für Enhanced Footer */
+
+/* Neue Status-LED Varianten */
+.status-led-inactive {
+  background-color: var(--text-tertiary);
+  opacity: 0.5;
+}
+
+.status-led-database {
+  background: linear-gradient(
+    45deg,
+    var(--accent-primary),
+    var(--accent-secondary)
+  );
+  box-shadow: 0 0 8px var(--accent-primary) / 30;
+}
+
+.status-led-data {
+  background: linear-gradient(45deg, var(--coral-red), var(--deep-red));
+  box-shadow: 0 0 8px var(--coral-red) / 30;
+}
+
+.status-led-time {
+  background: linear-gradient(45deg, var(--vibrant-orange), var(--coral-red));
+  box-shadow: 0 0 8px var(--vibrant-orange) / 30;
+}
+
+.status-led-system {
+  background: linear-gradient(45deg, var(--deep-red), var(--burgundy));
+  box-shadow: 0 0 8px var(--deep-red) / 30;
+}
+
+/* Status Indicator Erweiterungen */
+.status-indicator.status-info {
+  color: var(--accent-primary);
+}
+
+.status-indicator.status-neutral {
+  color: var(--text-secondary);
+}
+
+/* Animationen für Status-LEDs */
+.status-led-active {
+  animation: pulse-glow 2s ease-in-out infinite alternate;
+}
+
+.status-led-inactive {
+  animation: pulse-fade 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  from {
+    box-shadow: 0 0 5px currentColor;
+  }
+  to {
+    box-shadow: 0 0 15px currentColor, 0 0 20px currentColor;
+  }
+}
+
+@keyframes pulse-fade {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Responsive Anpassungen für Status-Grid */
+@media (max-width: 640px) {
+  .status-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .status-grid .status-indicator {
+    font-size: 0.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .status-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}

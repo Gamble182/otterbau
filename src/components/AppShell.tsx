@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 
 const NAV_ITEMS = [
   {
@@ -24,6 +25,25 @@ const NAV_ITEMS = [
           strokeLinejoin="round"
           strokeWidth={2}
           d="M8 5v4M16 5v4"
+        />
+      </svg>
+    ),
+  },
+  {
+    href: "/analysen",
+    label: "Analysen",
+    icon: (
+      <svg
+        className="w-6 h-6"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
         />
       </svg>
     ),
@@ -74,8 +94,33 @@ const NAV_ITEMS = [
   },
 ];
 
+// Hook für Online/Offline Status
+function useOnlineStatus() {
+  const [isOnline, setIsOnline] = useState(true);
+
+  useEffect(() => {
+    // Initial state
+    setIsOnline(navigator.onLine);
+
+    // Event listeners
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  return isOnline;
+}
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const isOnline = useOnlineStatus();
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)]">
@@ -125,11 +170,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
 
-          {/* Status Indicator */}
+          {/* Status Indicator - Dynamisch */}
           <div className="hidden lg:flex items-center gap-4">
-            <div className="status-indicator status-online">
-              <div className="status-led status-led-active" />
-              <span>Offline</span>
+            <div
+              className={`status-indicator ${
+                isOnline ? "status-online" : "status-offline"
+              }`}
+            >
+              <div
+                className={`status-led ${
+                  isOnline ? "status-led-active" : "status-led-inactive"
+                }`}
+              />
+              <span>{isOnline ? "Online" : "Offline"}</span>
             </div>
             <div className="text-sm font-medium text-[var(--text-secondary)]">
               {new Date().toLocaleDateString("de-DE", {
@@ -149,7 +202,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* iOS-style Mobile Bottom Navigation */}
       <nav className="nav-mobile md:hidden fixed bottom-0 inset-x-0 z-50 safe-area-pb">
-        <div className="grid grid-cols-3 h-20">
+        <div className="grid grid-cols-4 h-20">
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.href}

@@ -16,6 +16,9 @@ import WorkHoursChart from "@/components/dashboard/WorkHoursChart";
 import ExpenseCategoryChart from "@/components/dashboard/ExpenseCategoryChart";
 import ExpenseTimelineChart from "@/components/dashboard/ExpenseTimelineChart";
 
+// Enhanced Footer
+import { EnhancedFooter } from "@/components/EnhancedFooter";
+
 // Custom Hooks
 import { useEnhancedTimeFilter } from "@/hooks/useEnhancedTimeFilter";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
@@ -24,7 +27,6 @@ import {
   createCommonShortcuts,
 } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
-import { Card } from "@/components/ui/Card";
 
 function HomePage() {
   // QuickAdd State Management
@@ -140,26 +142,8 @@ function HomePage() {
           isFiltered={isFiltered}
         />
 
-        {/* Footer Status */}
-        <Card variant="glass" className="backdrop-blur">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-sm">
-            <div className="status-indicator status-online">
-              <div className="status-led status-led-active" />
-              <span className="font-medium">App läuft offline</span>
-            </div>
-            <div className="status-indicator status-offline">
-              <div className="status-led status-led-neutral" />
-              <span className="font-medium">Daten lokal gespeichert</span>
-            </div>
-            <div className="status-indicator status-offline">
-              <div className="status-led status-led-neutral" />
-              <span className="font-medium">
-                {displayName}
-                {!isFiltered && " (Alle Daten)"}
-              </span>
-            </div>
-          </div>
-        </Card>
+        {/* Enhanced Footer mit dynamischen Status-Informationen */}
+        <EnhancedFooter displayName={displayName} isFiltered={isFiltered} />
 
         {/* QuickAdd Modal - Conditional Rendering */}
         {showQuickAdd && (
