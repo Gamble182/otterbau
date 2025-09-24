@@ -41,7 +41,7 @@ function useStorageSize() {
     try {
       // Schätzung der localStorage Größe
       let total = 0;
-      for (let key in localStorage) {
+      for (const key in localStorage) {
         if (localStorage.hasOwnProperty(key)) {
           total += localStorage[key].length + key.length;
         }

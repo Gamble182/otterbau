@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Component, ReactNode, ErrorInfo } from "react";
+import { Component, ReactNode, ErrorInfo } from "react";
 import { Card } from "@/components/ui/Card";
 
 interface Props {

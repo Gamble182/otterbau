@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import React from "react";
+import { useState, useMemo, useEffect } from "react";
 import Modal from "./Modal";
 import { useEntries } from "@/store/useEntries";
 import { usePersons } from "@/store/usePersons";
@@ -22,7 +21,7 @@ export default function QuickAdd({
   const [activeType, setActiveType] = useState<"work" | "expense">(initialType);
 
   // Für externe Nutzung: öffne automatisch
-  React.useEffect(() => {
+  useEffect(() => {
     if (onClose) {
       setIsOpen(true);
       setActiveType(initialType);
@@ -190,7 +189,7 @@ function WorkForm({ onSuccess }: { onSuccess: () => void }) {
   });
 
   // Auto-select "Yannik" when persons load
-  React.useEffect(() => {
+  useEffect(() => {
     if (persons.length > 0 && !formData.personId) {
       const yannik = persons.find((p) => p.name === "Yannik");
       const defaultPerson = yannik || persons[0];

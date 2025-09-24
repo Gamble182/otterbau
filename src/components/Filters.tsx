@@ -1,6 +1,5 @@
 "use client";
 import { useState, useMemo } from "react";
-import React from "react";
 import { useEntries } from "@/store/useEntries";
 import { Card } from "@/components/ui/Card";
 import type { WorkPayload, ExpensePayload, ProjectCostPayload } from "@/lib/schemas/zod";

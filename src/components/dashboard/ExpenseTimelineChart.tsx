@@ -51,11 +51,11 @@ function ExpenseTimelineChart({
     );
 
     if (daysDiff <= 31) {
-      return { type: "month", days: daysDiff, label: "Tägliche Ansicht" };
+      return { type: "month" as const, days: daysDiff, label: "Tägliche Ansicht" };
     } else if (daysDiff <= 93) {
-      return { type: "quarter", days: daysDiff, label: "Wöchentliche Trends" };
+      return { type: "quarter" as const, days: daysDiff, label: "Wöchentliche Trends" };
     } else {
-      return { type: "long", days: daysDiff, label: "Monatliche Übersicht" };
+      return { type: "long" as const, days: daysDiff, label: "Monatliche Übersicht" };
     }
   };
 

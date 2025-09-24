@@ -1,14 +1,5 @@
 "use client";
 import { useMemo, memo } from "react";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-} from "recharts";
 import { useEntries } from "@/store/useEntries";
 import { ExpensePayload } from "@/lib/schemas/zod";
 
@@ -238,9 +229,6 @@ function EnhancedExpensesLine({
 
   // Statistiken berechnen
   const hasExpenses = data.some((d) => d.value > 0);
-  const totalExpenses = data.reduce((sum, d) => sum + d.value, 0);
-  const averagePerPeriod = totalExpenses / data.length;
-  const maxSinglePeriod = Math.max(...data.map((d) => d.value));
 
   if (!hasExpenses) {
     return (
