@@ -19,7 +19,7 @@ function WorkHoursChart() {
         <ChartErrorBoundary>
           <WorkByPersonBar
             // Keine Filter - alle historischen Daten
-            topN={5} // Alle Personen anzeigen
+            topN={10} // Alle Personen anzeigen
           />
         </ChartErrorBoundary>
       </div>

@@ -56,7 +56,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   return null;
 }
 
-function WorkByPersonBar({ from, to, topN = 10 }: Props) {
+function WorkByPersonBar({ from, to, topN = 15 }: Props) {
   const items = useEntries((s) => s.items);
 
   const data = useMemo(() => {
