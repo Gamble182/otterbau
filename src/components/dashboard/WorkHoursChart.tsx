@@ -5,10 +5,17 @@ import { memo } from "react";
 import { Card } from "@/components/ui/Card";
 import WorkByPersonBar from "@/components/charts/WorkByPersonBar";
 import { ChartErrorBoundary } from "@/components/ErrorBoundary";
-import { useChartControls, CHART_CONFIGS } from "@/hooks/useChartControls";
+import { useChartControls } from "@/hooks/useChartControls";
+
+// Lokale Konfiguration als Fallback
+const WORK_CHART_CONFIG = {
+  defaultTopN: 5,
+  availableTopN: [1, 2, 3, 4, 5, 10, 15, 20],
+  label: "Personen:",
+};
 
 function WorkHoursChart() {
-  const chartControls = useChartControls(CHART_CONFIGS.workByPerson);
+  const chartControls = useChartControls(WORK_CHART_CONFIG);
 
   // Dynamische Höhenberechnung basierend auf topN
   const getChartHeight = (topN: number) => {

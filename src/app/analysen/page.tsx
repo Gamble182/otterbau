@@ -7,10 +7,23 @@ import WorkByPersonBar from "@/components/charts/WorkByPersonBar";
 import ExpensesByCategoryPie from "@/components/charts/ExpensesByCategoryPie";
 import EnhancedExpensesLine from "@/components/charts/EnhancedExpensesLine";
 import WorkHoursBar from "@/components/charts/WorkHoursBar";
-import { useChartControls, CHART_CONFIGS } from "@/hooks/useChartControls";
+import { useChartControls } from "@/hooks/useChartControls";
 import { ChartErrorBoundary } from "@/components/ErrorBoundary";
 import { useEnhancedTimeFilter } from "@/hooks/useEnhancedTimeFilter";
 import TimeFilter from "@/components/dashboard/TimeFilter";
+
+// Lokale Chart-Konfigurationen
+const WORK_CHART_CONFIG = {
+  defaultTopN: 5,
+  availableTopN: [1, 2, 3, 4, 5, 10, 15, 20],
+  label: "Personen:",
+};
+
+const EXPENSE_CHART_CONFIG = {
+  defaultTopN: 10,
+  availableTopN: [1, 2, 3, 4, 5, 10, 15, 20],
+  label: "Kategorien:",
+};
 
 export default function AnalysenPage() {
   // Time Filter State
@@ -27,10 +40,8 @@ export default function AnalysenPage() {
     useEnhancedTimeFilter(timeFilterState);
 
   // Chart Controls
-  const workChartControls = useChartControls(CHART_CONFIGS.workByPerson);
-  const expenseChartControls = useChartControls(
-    CHART_CONFIGS.expensesByCategory
-  );
+  const workChartControls = useChartControls(WORK_CHART_CONFIG);
+  const expenseChartControls = useChartControls(EXPENSE_CHART_CONFIG);
 
   // Time Filter Handlers
   const handleOptionChange = (option: "gesamt" | "custom") => {

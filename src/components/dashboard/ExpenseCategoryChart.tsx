@@ -5,10 +5,17 @@ import { memo } from "react";
 import { Card } from "@/components/ui/Card";
 import ExpensesByCategoryPie from "@/components/charts/ExpensesByCategoryPie";
 import { ChartErrorBoundary } from "@/components/ErrorBoundary";
-import { useChartControls, CHART_CONFIGS } from "@/hooks/useChartControls";
+import { useChartControls } from "@/hooks/useChartControls";
+
+// Lokale Konfiguration als Fallback
+const EXPENSE_CHART_CONFIG = {
+  defaultTopN: 10,
+  availableTopN: [1, 2, 3, 4, 5, 10, 15, 20],
+  label: "Kategorien:",
+};
 
 function ExpenseCategoryChart() {
-  const chartControls = useChartControls(CHART_CONFIGS.expensesByCategory);
+  const chartControls = useChartControls(EXPENSE_CHART_CONFIG);
 
   return (
     <Card
